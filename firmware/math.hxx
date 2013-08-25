@@ -60,7 +60,7 @@ void print3vf(char cmd, float v1, float v2, float v3) {
   Serial.print("|");
 }
 // print 3 values
-void print3vi(char cmd, int16_t v1, int16_t v2, int16_t v3) {
+void print3vi(char cmd, int32_t v1, int32_t v2, int32_t v3) {
   Serial.print("!");
   Serial.print(cmd);
   Serial.print(v1);

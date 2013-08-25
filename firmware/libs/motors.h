@@ -10,6 +10,7 @@
 
 #include <Arduino.h>
 #include <Servo.h>
+#include "motors.h"
 
 #define MOTOR_MAX 4
 
@@ -42,5 +43,8 @@ public:
   void updateMotors();
 
 };
+
+// global singleton object
+Motors motors;
 
 #endif /* MOTORS_H_ */

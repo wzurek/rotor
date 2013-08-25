@@ -132,5 +132,17 @@ void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
   for (int i = 0; i < MAX_CHANNEL; i++) {
     toReturn[i] = locValues[i];
   }
+  if (FLAGS&FLAG_PRINT) {
+    print();
+  }
 }
 
+void Receiver::print() {
+  Serial.print("!R");
+  Serial.print(locValues[0]);
+  for (int i = 1; i < MAX_CHANNEL; i++) {
+    Serial.print(",");
+    Serial.print(locValues[i]);
+  }
+  Serial.print("|");
+}

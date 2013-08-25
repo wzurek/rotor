@@ -6,26 +6,14 @@
  */
 
 #include <Arduino.h>
-#include "receiver.h"
 #include <Wire.h>
 #include <Servo.h>
-#include "math.hxx"
-#include "motors.h"
 #include "L3G.h"
 #include "LSM303.h"
-#include "Vector3f.h"
-
-#define REPORT_RECEIVER
-
-#define RECEIVER_PIN1 51
-#define RECEIVER_PIN2 49
-#define RECEIVER_PIN3 47
-#define RECEIVER_PIN4 45
-
-#define CH_PITCH 0
-#define CH_ROL 1
-#define CH_THROTTLE 2
-#define CH_YAW 3
+#include "math.hxx"
+#include "vector3f.h"
+#include "receiver.h"
+#include "motors.h"
 
 uint32_t currentMicros;
 
@@ -37,11 +25,6 @@ Vector3f base(1, 0, 0);
 
 // rotation from desired to actual
 Matrix3f rotation;
-
-// receiver object
-Receiver receiver(RECEIVER_PIN1, RECEIVER_PIN2, RECEIVER_PIN3, RECEIVER_PIN4);
-
-Motors motors;
 
 // loops constants
 #define DELAY_50HZ 20
@@ -106,19 +89,7 @@ void readReceiver() {
   motors.rol = mapStick(channels[CH_ROL]);
   motors.yaw = mapStick(channels[CH_YAW]);
 
-#ifdef REPORT_RECEIVER
-  // print the receiver values to the serial
-  Serial.print("!R");
-  Serial.print(channels[0]);
-  for (int i = 1; i < MAX_CHANNEL; i++) {
-    Serial.print(",");
-    Serial.print(channels[i]);
-  }
-  Serial.print("|");
-
   motors.print();
-
-#endif
 }
 
 #define GYRO_GAIN 5413
