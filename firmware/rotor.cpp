@@ -11,8 +11,8 @@
 #include <Servo.h>
 #include "math.hxx"
 #include "motors.h"
-#include "L3G/L3G.h"
-#include "LSM303/LSM303.h"
+#include "L3G.h"
+#include "LSM303.h"
 #include "Vector3f.h"
 
 #define REPORT_RECEIVER

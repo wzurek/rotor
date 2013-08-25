@@ -62,29 +62,17 @@ Wire_LIB_INCLUDE = -I$(Wire_LIB_PATH)
 $(OBJDIR)/%.o:$(Wire_LIB_PATH)/%.cpp
 	$(GXX) $(GXXOPTIONS) $(CORE_INCLUDE) $(Wire_LIB_INCLUDE) $< -o $@
 
-# L3G Library
-L3G_LIB_PATH = L3G
-L3G_LIB_SRCS = $(wildcard $(L3G_LIB_PATH)/*.cpp)
-L3G_LIB_OBJ_FILES = $(L3G_LIB_SRCS:.cpp=.o)
-L3G_LIB_OBJS = $(patsubst $(L3G_LIB_PATH)/%,  $(OBJDIR)/%, $(L3G_LIB_OBJ_FILES))
+# Custom libs
+LIBS_PATH = libs
+LIBS_SRCS = $(wildcard $(LIBS_PATH)/*.cpp)
+LIBS_OBJ_FILES = $(LIBS_SRCS:.cpp=.o)
+LIBS_OBJS = $(patsubst $(LIBS_PATH)/%,  $(OBJDIR)/%, $(LIBS_OBJ_FILES))
 
-L3G_LIB_INCLUDE = -I$(L3G_LIB_PATH)
+LIBS_INCLUDE = -I$(LIBS_PATH)
 
-# compile L3G library
-$(OBJDIR)/%.o:$(L3G_LIB_PATH)/%.cpp
-	$(GXX) $(GXXOPTIONS) $(CORE_INCLUDE) $(Wire_LIB_INCLUDE) $(Servo_LIB_INCLUDE) $(L3G_LIB_INCLUDE) $< -o $@
-	
-# LSM303 Library
-LSM303_LIB_PATH = LSM303
-LSM303_LIB_SRCS = $(wildcard $(LSM303_LIB_PATH)/*.cpp)
-LSM303_LIB_OBJ_FILES = $(LSM303_LIB_SRCS:.cpp=.o)
-LSM303_LIB_OBJS = $(patsubst $(LSM303_LIB_PATH)/%,  $(OBJDIR)/%, $(LSM303_LIB_OBJ_FILES))
-
-LSM303_LIB_INCLUDE = -I$(LSM303_LIB_PATH)
-
-# compile LSM303 library
-$(OBJDIR)/%.o:$(LSM303_LIB_PATH)/%.cpp
-	$(GXX) $(GXXOPTIONS) $(CORE_INCLUDE) $(Wire_LIB_INCLUDE) $(Servo_LIB_INCLUDE) $(LSM303_LIB_INCLUDE) $< -o $@
+# compile custom libs
+$(OBJDIR)/%.o:$(LIBS_PATH)/%.cpp
+	$(GXX) $(GXXOPTIONS) $(CORE_INCLUDE) $(Wire_LIB_INCLUDE) $(Servo_LIB_INCLUDE) $(LIBS_INCLUDE) $< -o $@
 
 
 # Servo library
@@ -102,7 +90,7 @@ $(OBJDIR)/%.o:$(Servo_LIB_PATH)/%.cpp
 
 
 # package all libs into an archive	
-$(TARGET)/libs.a: $(LSM303_LIB_OBJS) $(L3G_LIB_OBJS) $(SD_LIB_OBJS) $(Wire_LIB_OBJS) $(Servo_LIB_OBJS)
+$(TARGET)/libs.a: $(LIBS_OBJS) $(Wire_LIB_OBJS) $(Servo_LIB_OBJS)
 	$(AR) rcs $@ $?
 
 # all - wil build $(APP_NAME).bin
@@ -142,7 +130,7 @@ $(TARGET)/core.a: $(CORE_OBJS)
 
 # builds the application code
 $(OBJDIR)/%.o:%.cpp
-	$(GCC) $(GCCOPTIONS) $(CORE_INCLUDE) $(SD_LIB_INCLUDE) $(LSM303_LIB_INCLUDE) $(L3G_LIB_INCLUDE) $(Wire_LIB_INCLUDE) $(Servo_LIB_INCLUDE) $< -o $@
+	$(GCC) $(GCCOPTIONS) $(CORE_INCLUDE) $(LIBS_INCLUDE) $(Wire_LIB_INCLUDE) $(Servo_LIB_INCLUDE) $< -o $@
 
 # builds elf from compiled sources
 $(APP_NAME).elf: $(OBJDIR) $(TARGET)/core.a  $(TARGET)/libs.a $(MAIN_OBJS)
