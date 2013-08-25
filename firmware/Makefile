@@ -14,7 +14,7 @@ MAIN_OBJ_FILES = $(MAIN_C_SRCS:.c=.o) $(MAIN_CPP_SRCS:.cpp=.o)
 MAIN_OBJS = $(patsubst %,$(OBJDIR)/%,$(MAIN_OBJ_FILES))
 
 # adruino home
-arduino = /Users/wzurek/Dev/ArdDue/hardware
+arduino = ../hardware
 
 # executables and options
 GCC        = $(arduino)/tools/g++_arm_none_eabi/bin/arm-none-eabi-gcc
