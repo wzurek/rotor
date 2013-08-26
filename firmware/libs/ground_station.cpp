@@ -54,6 +54,11 @@ void GroundStationComm::processCmds() {
     default:
       // should never happen
       cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
+      buff_index = 0;
     }
   }
 }
+
+// global object
+GroundStationComm groundStation;
+

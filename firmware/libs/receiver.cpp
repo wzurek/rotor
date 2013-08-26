@@ -81,6 +81,8 @@ Receiver::Receiver(uint32_t pin1, uint32_t pin2, uint32_t pin3, uint32_t pin4,
     Receiver::values[i] = 0;
     locValues[i] = 0;
   }
+
+  FLAGS = 0;
 }
 
 bool Receiver::hasNewData() {

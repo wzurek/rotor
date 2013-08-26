@@ -15,6 +15,30 @@
 #include "receiver.h"
 #include "motors.h"
 
+#include "global_objects.h"
+
+#define RECEIVER_PIN1 51
+#define RECEIVER_PIN2 49
+#define RECEIVER_PIN3 47
+#define RECEIVER_PIN4 45
+#define RECEIVER_PIN5 43
+#define RECEIVER_PIN6 41
+#define RECEIVER_PIN7 39
+#define RECEIVER_PIN8 37
+#define RECEIVER_PIN9 35
+#define RECEIVER_PIN10 33
+
+// --------------
+// Global objects
+Receiver receiver(RECEIVER_PIN1, RECEIVER_PIN2, RECEIVER_PIN3,
+    RECEIVER_PIN4, RECEIVER_PIN5, RECEIVER_PIN6, RECEIVER_PIN7, RECEIVER_PIN8,
+    RECEIVER_PIN9, RECEIVER_PIN10);
+L3G gyro;
+LSM303 compass;
+Motors motors;
+
+// -------------
+
 uint32_t currentMicros;
 
 // desired direction
@@ -29,10 +53,6 @@ Matrix3f rotation;
 // loops constants
 #define DELAY_50HZ 20
 uint32_t next50Hz;
-
-// sensors
-L3G gyro;
-LSM303 compass;
 
 void initGyro() {
   if (!gyro.init(L3GD20_DEVICE, L3G_SA0_HIGH)) {

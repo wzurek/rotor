@@ -16,6 +16,17 @@
 #define REC_MAX 1900
 #define REC_RANGE 800
 
+#define CH_PITCH 0
+#define CH_ROL 1
+#define CH_THROTTLE 2
+#define CH_YAW 3
+#define CH_5 4
+#define CH_6 5
+#define CH_7 6
+#define CH_8 7
+#define CH_9 8
+#define CH_10 9
+
 #define FLAG_PRINT 1
 
 class Receiver {
@@ -65,32 +76,5 @@ protected:
   static volatile uint32_t values[MAX_CHANNEL];
   static volatile uint32_t bUpdateFlagsShared;
 };
-
-#define RECEIVER_PIN1 51
-#define RECEIVER_PIN2 49
-#define RECEIVER_PIN3 47
-#define RECEIVER_PIN4 45
-#define RECEIVER_PIN5 43
-#define RECEIVER_PIN6 41
-#define RECEIVER_PIN7 39
-#define RECEIVER_PIN8 37
-#define RECEIVER_PIN9 35
-#define RECEIVER_PIN10 33
-
-#define CH_PITCH 0
-#define CH_ROL 1
-#define CH_THROTTLE 2
-#define CH_YAW 3
-#define CH_5 4
-#define CH_6 5
-#define CH_7 6
-#define CH_8 7
-#define CH_9 8
-#define CH_10 9
-
-// receiver object
-Receiver receiver(RECEIVER_PIN1, RECEIVER_PIN2, RECEIVER_PIN3, RECEIVER_PIN4,
-    RECEIVER_PIN5, RECEIVER_PIN6, RECEIVER_PIN7, RECEIVER_PIN8, RECEIVER_PIN9,
-    RECEIVER_PIN10);
 
 #endif /* RECEIVER_H_ */

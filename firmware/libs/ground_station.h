@@ -27,6 +27,6 @@ public:
 };
 
 // global object
-GroundStationComm groundStation;
+extern GroundStationComm groundStation;
 
 #endif /* GROUND_STATION_H_ */

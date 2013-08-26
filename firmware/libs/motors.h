@@ -44,7 +44,4 @@ public:
 
 };
 
-// global singleton object
-Motors motors;
-
 #endif /* MOTORS_H_ */
