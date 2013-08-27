@@ -40,6 +40,12 @@ union PID {
 float compoutePID(float value, float target, PID* pid, float currentTime) {
   float dt = currentTime - pid->lastTime;
 
+  if (pid->lastTime==0) {
+    pid->lastTime = currentTime;
+    return 0;
+  }
+  pid->lastTime = currentTime;
+
   float error = target - value;
   pid->integral += error * dt;
   float derivate = (error - pid->previous_error) / dt;

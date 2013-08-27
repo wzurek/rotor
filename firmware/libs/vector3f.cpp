@@ -7,6 +7,12 @@
 
 #include "Vector3f.h"
 
+Vector3f::Vector3f() {
+  data[XAXIS] = 0;
+  data[YAXIS] = 0;
+  data[ZAXIS] = 0;
+}
+
 Vector3f::Vector3f(float x, float y, float z) {
   data[XAXIS] = x;
   data[YAXIS] = y;

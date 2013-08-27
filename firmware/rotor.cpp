@@ -38,6 +38,8 @@ L3G gyro;
 LSM303 compass;
 Motors motors;
 
+PID accelPid;
+
 // -------------
 
 uint32_t currentMicros;
@@ -74,6 +76,18 @@ void initCompass() {
   compass.writeAccReg(LSM303_CTRL_REG1_A, 0x47); // normal power mode, all axes enabled, 50 Hz
   compass.writeAccReg(LSM303_CTRL_REG4_A, 0x28); // 8 g full scale: FS = 10 on DLHC; high resolution output mode
   compass.writeMagReg(LSM303_MR_REG_M, 0x00); // continuous conversion mode
+
+  compass.calibrateAccel();
+
+  XAXIS;
+
+  accelPid.p = 10;
+  accelPid.i = 1;
+  accelPid.d = 0;
+
+  accelPid.integral = 0;
+  accelPid.lastTime = 0;
+  accelPid.previous_error = 0;
 }
 
 void setup() {
@@ -115,8 +129,17 @@ void readReceiver() {
   motors.print();
 }
 
-#define GYRO_GAIN 5413
 
+void eulerAngles()
+{
+  kinematicsAngle[XAXIS]  =  atan2(dcmRotation.data[7], dcmRotation.data[8]);
+  kinematicsAngle[YAXIS] =  -asin(dcmRotation.data[6]);
+  kinematicsAngle[ZAXIS]   =  atan2(dcmRotation.data[3], dcmRotation.data[0]);
+
+  print3vf('E', kinematicsAngle[0], kinematicsAngle[1], kinematicsAngle[2]);
+}
+
+#define GYRO_GAIN 5413
 void updateOrientation() {
   static uint32_t lastUpdate;
 
@@ -137,20 +160,13 @@ void updateOrientation() {
   base.copyFrom(stabilise.data);
   base.transform(dcmRotation.data);
 
+  // add PI from acceleration
+
+
   print3vf('O', base.data[0], base.data[1], base.data[2]);
 
   eulerAngles();
 }
-
-void eulerAngles()
-{
-  kinematicsAngle[XAXIS]  =  atan2(dcmRotation.data[7], dcmRotation.data[8]);
-  kinematicsAngle[YAXIS] =  -asin(dcmRotation.data[6]);
-  kinematicsAngle[ZAXIS]   =  atan2(dcmRotation.data[3], dcmRotation.data[0]);
-
-  print3vf('E', kinematicsAngle[0], kinematicsAngle[1], kinematicsAngle[2]);
-}
-
 
 void perform50HzActions() {
   // read from receiver

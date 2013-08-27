@@ -2,6 +2,7 @@
 #define LSM303_h
 
 #include <Arduino.h> // for byte data type
+#include "vector3f.h"
 
 // device types
 
@@ -98,6 +99,9 @@ class LSM303
       int16_t x, y, z;
     } vector;
 
+    // base values for accelerometer from calibration
+    Vector3f accel_base;
+
     vector a; // accelerometer readings
     vector m; // magnetometer readings
     vector m_max; // maximum magnetometer values, used for calibration
@@ -107,13 +111,13 @@ class LSM303
     
     // HEX  = BIN          RANGE    GAIN X/Y/Z        GAIN Z
     //                               DLH (DLM/DLHC)    DLH (DLM/DLHC)
-    // 0x20 = 0b00100000   ��1.3     1055 (1100)        950 (980) (default)
-    // 0x40 = 0b01000000   ��1.9      795  (855)        710 (760)
-    // 0x60 = 0b01100000   ��2.5      635  (670)        570 (600)
-    // 0x80 = 0b10000000   ��4.0      430  (450)        385 (400)
-    // 0xA0 = 0b10100000   ��4.7      375  (400)        335 (355)
-    // 0xC0 = 0b11000000   ��5.6      320  (330)        285 (295)
-    // 0xE0 = 0b11100000   ��8.1      230  (230)        205 (205)
+    // 0x20 = 0b00100000   ������1.3     1055 (1100)        950 (980) (default)
+    // 0x40 = 0b01000000   ������1.9      795  (855)        710 (760)
+    // 0x60 = 0b01100000   ������2.5      635  (670)        570 (600)
+    // 0x80 = 0b10000000   ������4.0      430  (450)        385 (400)
+    // 0xA0 = 0b10100000   ������4.7      375  (400)        335 (355)
+    // 0xC0 = 0b11000000   ������5.6      320  (330)        285 (295)
+    // 0xE0 = 0b11100000   ������8.1      230  (230)        205 (205)
     enum magGain { magGain_13 = 0x20, magGain_19 = 0x40, magGain_25 = 0x60, magGain_40 = 0x80,
                    magGain_47 = 0xA0, magGain_56 = 0xC0, magGain_81 = 0xE0 };
 
@@ -142,6 +146,8 @@ class LSM303
     int heading(void);
     int heading(vector from);
     
+    void calibrateAccel();
+
     // vector functions
     static void vector_cross(const vector *a, const vector *b, vector *out);
     static float vector_dot(const vector *a,const vector *b);

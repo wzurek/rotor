@@ -202,6 +202,11 @@ void LSM303::readAcc(void)
   a.x = ((int16_t)(xha << 8 | xla)) >> 4;
   a.y = ((int16_t)(yha << 8 | yla)) >> 4;
   a.z = ((int16_t)(zha << 8 | zla)) >> 4;
+
+  a.x -= accel_base.data[XAXIS];
+  a.y -= accel_base.data[YAXIS];
+  a.z -= accel_base.data[ZAXIS];
+
 }
 
 // Reads the 3 magnetometer channels and stores them in vector m
@@ -335,4 +340,18 @@ byte LSM303::detectSA0_A(void)
   }
   else
     return LSM303_SA0_A_HIGH;
+}
+
+void LSM303::calibrateAccel() {
+
+  for(int i=0; i<32; i++) {
+    readAcc();
+    accel_base.data[XAXIS]+=a.x;
+    accel_base.data[YAXIS]+=a.y;
+    accel_base.data[ZAXIS]+=a.z;
+    delay(20);
+  }
+  accel_base.data[XAXIS]/=32;
+  accel_base.data[YAXIS]/=32;
+  accel_base.data[ZAXIS]/=32;
 }

@@ -20,6 +20,7 @@ public:
 
   float data[3];
 
+  Vector3f();
   Vector3f(float x, float y, float z);
   Vector3f(float* data, int index);
 
