@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Servo.h>
+#include <math.h>
 #include "L3G.h"
 #include "LSM303.h"
 #include "math.hxx"
@@ -48,7 +49,9 @@ Vector3f stabilise(1, 0, 0);
 Vector3f base(1, 0, 0);
 
 // rotation from desired to actual
-Matrix3f rotation;
+Matrix3f dcmRotation;
+
+float kinematicsAngle[3];
 
 // loops constants
 #define DELAY_50HZ 20
@@ -128,14 +131,26 @@ void updateOrientation() {
   float dt = (currentMicros - lastUpdate) / 1000000.0;
   lastUpdate = currentMicros;
 
-  rotation.applyRotation(xps * dt, yps * dt, zps * dt);
-  rotation.fixError();
+  dcmRotation.applyRotation(xps * dt, yps * dt, zps * dt);
+  dcmRotation.fixError();
 
   base.copyFrom(stabilise.data);
-  base.transform(rotation.data);
+  base.transform(dcmRotation.data);
 
   print3vf('O', base.data[0], base.data[1], base.data[2]);
+
+  eulerAngles();
 }
+
+void eulerAngles()
+{
+  kinematicsAngle[XAXIS]  =  atan2(dcmRotation.data[7], dcmRotation.data[8]);
+  kinematicsAngle[YAXIS] =  -asin(dcmRotation.data[6]);
+  kinematicsAngle[ZAXIS]   =  atan2(dcmRotation.data[3], dcmRotation.data[0]);
+
+  print3vf('E', kinematicsAngle[0], kinematicsAngle[1], kinematicsAngle[2]);
+}
+
 
 void perform50HzActions() {
   // read from receiver

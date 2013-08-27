@@ -10,6 +10,10 @@
 
 #include <Arduino.h>
 
+#define XAXIS 0
+#define YAXIS 1
+#define ZAXIS 2
+
 class Vector3f {
 
 public:

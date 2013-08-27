@@ -36,3 +36,13 @@ size_t SerialMock::readBytesUntil(char terminator, char* buffer,
   loc += i;
   return i;
 }
+
+void SerialMock::print(char c) {
+  cout<<"Printing char"<<endl;
+  cout<<c;
+}
+
+void SerialMock::print(char* pstr) {
+  cout<<"Printing string"<<endl;
+  cout<<pstr;
+}

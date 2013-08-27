@@ -19,6 +19,11 @@ GroundStationComm::GroundStationComm() {
 }
 
 void GroundStationComm::invokeCommand() {
+  Serial.print("Got command '");
+  Serial.print(cmd_buff[0]);
+  Serial.print("' with args '");
+  cmd_buff[buff_index] = 0;
+  Serial.print(cmd_buff+1);
 }
 
 void GroundStationComm::processCmds() {

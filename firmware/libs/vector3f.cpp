@@ -7,14 +7,10 @@
 
 #include "Vector3f.h"
 
-#define X 0
-#define Y 1
-#define Z 2
-
 Vector3f::Vector3f(float x, float y, float z) {
-  data[X] = x;
-  data[Y] = y;
-  data[Z] = z;
+  data[XAXIS] = x;
+  data[YAXIS] = y;
+  data[ZAXIS] = z;
 }
 
 Vector3f::Vector3f(float* data, int index) {
@@ -47,33 +43,33 @@ void Vector3f::copyFrom(float* src) {
 }
 
 void Vector3f::cross(Vector3f b, float* out) {
-  out[X] = data[Y] * b.data[Z] - data[Z] * b.data[Y];
-  out[Y] = data[Z] * b.data[X] - data[X] * b.data[Z];
-  out[Z] = data[X] * b.data[Y] - data[Y] * b.data[X];
+  out[XAXIS] = data[YAXIS] * b.data[ZAXIS] - data[ZAXIS] * b.data[YAXIS];
+  out[YAXIS] = data[ZAXIS] * b.data[XAXIS] - data[XAXIS] * b.data[ZAXIS];
+  out[ZAXIS] = data[XAXIS] * b.data[YAXIS] - data[YAXIS] * b.data[XAXIS];
 }
 
 float Vector3f::dot(Vector3f b) {
-  return data[X] * b.data[X] + data[Y] * b.data[Y] + data[Z] * b.data[Z];
+  return data[XAXIS] * b.data[XAXIS] + data[YAXIS] * b.data[YAXIS] + data[ZAXIS] * b.data[ZAXIS];
 }
 
 void Vector3f::multiply(float dot) {
-  data[X] *= dot;
-  data[Y] *= dot;
-  data[Z] *= dot;
+  data[XAXIS] *= dot;
+  data[YAXIS] *= dot;
+  data[ZAXIS] *= dot;
 }
 
 void Vector3f::minus(Vector3f multiply) {
-  data[X] -= multiply.data[X];
-  data[Y] -= multiply.data[Y];
-  data[Z] -= multiply.data[Z];
+  data[XAXIS] -= multiply.data[XAXIS];
+  data[YAXIS] -= multiply.data[YAXIS];
+  data[ZAXIS] -= multiply.data[ZAXIS];
 }
 
 void Vector3f::normalize() {
   double length = sqrt(
-      data[X] * data[X] + data[Y] * data[Y] + data[Z] * data[Z]);
-  data[X] /= length;
-  data[Y] /= length;
-  data[Z] /= length;
+      data[XAXIS] * data[XAXIS] + data[YAXIS] * data[YAXIS] + data[ZAXIS] * data[ZAXIS]);
+  data[XAXIS] /= length;
+  data[YAXIS] /= length;
+  data[ZAXIS] /= length;
 }
 
 Matrix3f::Matrix3f() {

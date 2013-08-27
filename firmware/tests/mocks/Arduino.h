@@ -23,6 +23,9 @@ public:
   // real
   uint32_t available();
   size_t readBytesUntil(char terminator, char *buffer, size_t length);
+
+  void print(char c);
+  void print(char* pstr);
 };
 
 extern SerialMock Serial;

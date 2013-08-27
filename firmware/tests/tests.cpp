@@ -4,8 +4,9 @@ using namespace std;
 
 int testGroundStation() {
 
-  Serial.setInput("foo");
+  Serial.setInput("some|rubbish!S1|other rubbish!S2|");
   groundStation.processCmds();
+  cout<<"end"<<endl;
 }
 
 int main() {
