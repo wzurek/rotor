@@ -203,9 +203,9 @@ void LSM303::readAcc(void)
   a.y = ((int16_t)(yha << 8 | yla)) >> 4;
   a.z = ((int16_t)(zha << 8 | zla)) >> 4;
 
-  a.x -= accel_base.data[XAXIS];
-  a.y -= accel_base.data[YAXIS];
-  a.z -= accel_base.data[ZAXIS];
+//  a.x -= accel_base.data[XAXIS];
+//  a.y -= accel_base.data[YAXIS];
+//  a.z -= accel_base.data[ZAXIS];
 
 }
 
@@ -344,6 +344,11 @@ byte LSM303::detectSA0_A(void)
 
 void LSM303::calibrateAccel() {
 
+  accel_base.data[XAXIS] = 0;
+  accel_base.data[YAXIS] = 0;
+  accel_base.data[ZAXIS] = 0;
+
+  delay(100);
   for(int i=0; i<32; i++) {
     readAcc();
     accel_base.data[XAXIS]+=a.x;

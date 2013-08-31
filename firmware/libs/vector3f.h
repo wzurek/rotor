@@ -26,12 +26,14 @@ public:
 
   void print();
 
+  /** transform given vector through DCM matrix */
   void transform(float* m);
-  void cross(Vector3f b, float* out);
+  void cross(float* b, float* out);
   float dot(Vector3f b);
 
   void multiply(float dot);
-  void minus(Vector3f multiply);
+  void substract(Vector3f* sub);
+  void add(Vector3f* add);
   void normalize();
   void copyFrom(float* src);
 
@@ -50,6 +52,7 @@ public:
 
   void print();
   void multiply(float* m);
+  void applyRotation(float* g);
   void applyRotation(float yaw, float pitch, float rol);
   void fixError();
 };

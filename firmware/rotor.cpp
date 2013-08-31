@@ -46,8 +46,9 @@ PID accelPidY;
 #define REPORT_SENSORS 1
 #define REPORT_RECEIVER 2
 
-uint32_t REPORTING = REPORT_SENSORS & REPORT_RECEIVER;
+uint32_t REPORTING = 0; //REPORT_SENSORS;// | REPORT_RECEIVER;
 
+// current time
 uint32_t currentMicros;
 
 // desired direction
@@ -59,6 +60,12 @@ Vector3f base(1, 0, 0);
 // rotation from desired to actual
 Matrix3f dcmRotation;
 
+// accelerator drift correction
+Vector3f omegaP;
+// accelerator accumulated drift correction
+Vector3f omegaI(0, 0, 0);
+
+// angles
 float kinematicsAngle[3];
 
 // loops constants
@@ -85,8 +92,6 @@ void initCompass() {
 
   compass.calibrateAccel();
 
-  XAXIS;
-
   accelPidX.p = 10;
   accelPidX.i = 1;
   accelPidX.d = 0;
@@ -110,7 +115,7 @@ void setup() {
   delay(200);
   Wire.begin();
 
-  Serial.println("S");
+  Serial.println('S');
   delay(100);
 
   // start listening to the receiver
@@ -123,7 +128,7 @@ void setup() {
   initCompass();
 
   // arm motors
-  motors.arm();
+//  motors.arm();
 
   // schedule next 50Hz refresh
   next50Hz = 0;
@@ -152,9 +157,33 @@ void eulerAngles() {
   print3vf('E', kinematicsAngle[0], kinematicsAngle[1], kinematicsAngle[2]);
 }
 
+void computeOmegas() {
+
+  Vector3f acc(compass.a.x, compass.a.y, -compass.a.z);
+  float weight = 1;
+  float kp = 0.05;
+  float ki = 0.0001;
+
+  Vector3f err;
+  acc.cross(&dcmRotation.data[6], err.data);
+
+  omegaP.copyFrom(err.data);
+  omegaP.multiply(kp * weight);
+
+  Vector3f dOmegaI;
+  dOmegaI.copyFrom(err.data);
+  dOmegaI.multiply(ki * weight);
+
+  omegaI.add(&dOmegaI);
+
+  omegaP.data[ZAXIS] = 0;
+  omegaI.data[ZAXIS] = 0;
+}
+
 #define GYRO_GAIN 5413
 #define GRAVITY 240
 void updateOrientation() {
+
   static uint32_t lastUpdate;
 
   float xps = gyro.g.x;
@@ -165,33 +194,29 @@ void updateOrientation() {
   yps = (yps / GYRO_GAIN) * PI * 2;
   zps = (zps / GYRO_GAIN) * PI * 2;
 
+  Vector3f g(xps, yps, zps);
+
+  computeOmegas();
+
+  g.substract(&omegaP);
+  g.substract(&omegaI);
+
   float dt = (currentMicros - lastUpdate) / 1000000.0;
   lastUpdate = currentMicros;
 
-  dcmRotation.applyRotation(xps * dt, yps * dt, zps * dt);
+  g.multiply(dt);
+
+  dcmRotation.applyRotation(g.data);
   dcmRotation.fixError();
 
   base.copyFrom(stabilise.data);
   base.transform(dcmRotation.data);
 
-  // add PI from acceleration
-  float ax = compass.a.x;
-  float ay = compass.a.y;
-  float az = compass.a.z;
-
-  Vector3f pi;
-  pi.data[XAXIS] = compoutePID(ax, 0, &accelPidX, currentMicros);
-  pi.data[YAXIS] = compoutePID(ay, 0, &accelPidY, currentMicros);
-
-  float force = length(ax, ay, az) / GRAVITY;
-
-  // if the force is close to gravity, apply PID for drift correction
-  if (force > 0.5 && force < 1.5) {
-    print3vf('B', pi.data[XAXIS], pi.data[YAXIS], pi.data[ZAXIS]);
-  }
-  print3vf('F', force, 0, 0);
-
-  print3vf('O', base.data[0], base.data[1], base.data[2]);
+  Vector3f accerDCM;
+  // set as base vector
+  accerDCM.copyFrom(compass.accel_base.data);
+  // compute the expected value based on DCM matrix
+  accerDCM.transform(dcmRotation.data);
 
   eulerAngles();
 }
@@ -202,17 +227,15 @@ void perform50HzActions() {
 
   // read sensors
   gyro.read();
-  gyro.print();
+  if (REPORTING & REPORT_SENSORS) {
+    gyro.print();
+  }
 
   compass.readAcc();
   if (REPORTING & REPORT_SENSORS) {
     print3vi('A', compass.a.x, compass.a.y, compass.a.z);
   }
 
-  compass.readMag();
-  if (REPORTING & REPORT_SENSORS) {
-    print3vi('M', compass.m.x, compass.m.y, compass.m.z);
-  }
   // update orientation
   updateOrientation();
 

@@ -65,6 +65,10 @@ void print3vf(char cmd, float v1, float v2, float v3) {
   Serial.print(v3);
   Serial.print("|");
 }
+// print vector
+void print3vf(char cmd, Vector3f* v) {
+  print3vf(cmd, v->data[XAXIS], v->data[YAXIS], v->data[ZAXIS]);
+}
 // print 3 values
 void print3vi(char cmd, int32_t v1, int32_t v2, int32_t v3) {
   Serial.print("!");

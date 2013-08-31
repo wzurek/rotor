@@ -25,9 +25,7 @@ Vector3f::Vector3f(float* data, int index) {
   }
 }
 
-void Vector3f::print() {
-}
-
+/** transform given vector through DCM matrix */
 void Vector3f::transform(float* m) {
   float t[3];
   for (int i = 0; i < 3; i++) {
@@ -48,14 +46,16 @@ void Vector3f::copyFrom(float* src) {
   }
 }
 
-void Vector3f::cross(Vector3f b, float* out) {
-  out[XAXIS] = data[YAXIS] * b.data[ZAXIS] - data[ZAXIS] * b.data[YAXIS];
-  out[YAXIS] = data[ZAXIS] * b.data[XAXIS] - data[XAXIS] * b.data[ZAXIS];
-  out[ZAXIS] = data[XAXIS] * b.data[YAXIS] - data[YAXIS] * b.data[XAXIS];
+/** copy cross product of the vectors to out array */
+void Vector3f::cross(float* b, float* out) {
+  out[XAXIS] = data[YAXIS] * b[ZAXIS] - data[ZAXIS] * b[YAXIS];
+  out[YAXIS] = data[ZAXIS] * b[XAXIS] - data[XAXIS] * b[ZAXIS];
+  out[ZAXIS] = data[XAXIS] * b[YAXIS] - data[YAXIS] * b[XAXIS];
 }
 
 float Vector3f::dot(Vector3f b) {
-  return data[XAXIS] * b.data[XAXIS] + data[YAXIS] * b.data[YAXIS] + data[ZAXIS] * b.data[ZAXIS];
+  return data[XAXIS] * b.data[XAXIS] + data[YAXIS] * b.data[YAXIS]
+      + data[ZAXIS] * b.data[ZAXIS];
 }
 
 void Vector3f::multiply(float dot) {
@@ -64,15 +64,16 @@ void Vector3f::multiply(float dot) {
   data[ZAXIS] *= dot;
 }
 
-void Vector3f::minus(Vector3f multiply) {
-  data[XAXIS] -= multiply.data[XAXIS];
-  data[YAXIS] -= multiply.data[YAXIS];
-  data[ZAXIS] -= multiply.data[ZAXIS];
+void Vector3f::substract(Vector3f* sub) {
+  data[XAXIS] -= sub->data[XAXIS];
+  data[YAXIS] -= sub->data[YAXIS];
+  data[ZAXIS] -= sub->data[ZAXIS];
 }
 
 void Vector3f::normalize() {
   double length = sqrt(
-      data[XAXIS] * data[XAXIS] + data[YAXIS] * data[YAXIS] + data[ZAXIS] * data[ZAXIS]);
+      data[XAXIS] * data[XAXIS] + data[YAXIS] * data[YAXIS]
+          + data[ZAXIS] * data[ZAXIS]);
   data[XAXIS] /= length;
   data[YAXIS] /= length;
   data[ZAXIS] /= length;
@@ -121,19 +122,21 @@ void Matrix3f::multiply(float* m) {
     data[i] = result[i];
   }
 }
-;
+void Matrix3f::applyRotation(float* g) {
+  applyRotation(g[XAXIS], g[YAXIS], g[ZAXIS]);
+}
 
 void Matrix3f::applyRotation(float gx, float gy, float gz) {
   float m[9];
-  m[0] = 1; // 11
+  m[0] = 1; //.. 11
   m[1] = -gz; // 12
-  m[2] = gy; // 13
-  m[3] = gz; // 21
-  m[4] = 1; // 22
+  m[2] = gy; //. 13
+  m[3] = gz; //. 21
+  m[4] = 1; //.. 22
   m[5] = -gx; // 23
   m[6] = -gy; // 31
-  m[7] = gx; // 32
-  m[8] = 1; // 33
+  m[7] = gx; //. 32
+  m[8] = 1; //.. 33
   multiply(m);
 }
 
@@ -148,14 +151,14 @@ void Matrix3f::fixError() {
   Vector3f berr(a.data, 0);
   berr.multiply(err);
 
-  a.minus(berr);
+  a.substract(&berr);
   a.normalize();
 
-  b.minus(berr);
+  b.substract(&berr);
   b.normalize();
 
   Vector3f c(0, 0, 0);
-  a.cross(b, c.data);
+  a.cross(b.data, c.data);
 
   for (int j = 0; j < 3; j++) {
     data[j] = a.data[j];
@@ -165,5 +168,11 @@ void Matrix3f::fixError() {
   }
   for (int j = 0; j < 3; j++) {
     data[j + 6] = c.data[j];
+  }
+}
+
+void Vector3f::add(Vector3f* add) {
+  for (int i = 0; i < 3; i++) {
+    data[i] += add->data[i];
   }
 }
