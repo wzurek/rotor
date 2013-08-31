@@ -52,14 +52,6 @@ void Motors::updateMotors() {
   motor_throttle[REAR_LEFT] = base_throttle - (pitch * PITCH_MAX)
       + (rol * ROL_MAX);
 
-  Serial.print("!M");
-  Serial.print(motor_throttle[0]);
-  for (int i = 1; i < MOTOR_MAX; i++) {
-    Serial.print(",");
-    Serial.print(motor_throttle[i]);
-  }
-  Serial.print("|");
-
   // write to motors
   for (int i = 0; i < MOTOR_MAX; i++) {
     motor[i].writeMicroseconds(motor_throttle[i]);
@@ -67,14 +59,12 @@ void Motors::updateMotors() {
 }
 
 void Motors::print() {
-  Serial.print("!T");
-  Serial.print(pitch);
-  Serial.print(",");
-  Serial.print(rol);
-  Serial.print(",");
-  Serial.print(throttle);
-  Serial.print(",");
-  Serial.print(yaw);
+  Serial.print("!M");
+  Serial.print(motor_throttle[0]);
+  for (int i = 1; i < MOTOR_MAX; i++) {
+    Serial.print(",");
+    Serial.print(motor_throttle[i]);
+  }
   Serial.print("|");
 }
 

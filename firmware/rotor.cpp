@@ -31,16 +31,22 @@
 
 // --------------
 // Global objects
-Receiver receiver(RECEIVER_PIN1, RECEIVER_PIN2, RECEIVER_PIN3,
-    RECEIVER_PIN4, RECEIVER_PIN5, RECEIVER_PIN6, RECEIVER_PIN7, RECEIVER_PIN8,
-    RECEIVER_PIN9, RECEIVER_PIN10);
+Receiver receiver(RECEIVER_PIN1, RECEIVER_PIN2, RECEIVER_PIN3, RECEIVER_PIN4,
+    RECEIVER_PIN5, RECEIVER_PIN6, RECEIVER_PIN7, RECEIVER_PIN8, RECEIVER_PIN9,
+    RECEIVER_PIN10);
 L3G gyro;
 LSM303 compass;
 Motors motors;
 
-PID accelPid;
+PID accelPidX;
+PID accelPidY;
 
 // -------------
+
+#define REPORT_SENSORS 1
+#define REPORT_RECEIVER 2
+
+uint32_t REPORTING = REPORT_SENSORS & REPORT_RECEIVER;
 
 uint32_t currentMicros;
 
@@ -81,13 +87,21 @@ void initCompass() {
 
   XAXIS;
 
-  accelPid.p = 10;
-  accelPid.i = 1;
-  accelPid.d = 0;
+  accelPidX.p = 10;
+  accelPidX.i = 1;
+  accelPidX.d = 0;
 
-  accelPid.integral = 0;
-  accelPid.lastTime = 0;
-  accelPid.previous_error = 0;
+  accelPidX.integral = 0;
+  accelPidX.lastTime = 0;
+  accelPidX.previous_error = 0;
+
+  accelPidY.p = 10;
+  accelPidY.i = 1;
+  accelPidY.d = 0;
+
+  accelPidY.integral = 0;
+  accelPidY.lastTime = 0;
+  accelPidY.previous_error = 0;
 }
 
 void setup() {
@@ -120,26 +134,26 @@ void readReceiver() {
 
   // get new data from receiver
   receiver.readAll(channels);
+  if (REPORTING & REPORT_RECEIVER) {
+    receiver.print();
+  }
 
   motors.throttle = mapThrottle(channels[CH_THROTTLE]);
   motors.pitch = mapStick(channels[CH_PITCH]);
   motors.rol = mapStick(channels[CH_ROL]);
   motors.yaw = mapStick(channels[CH_YAW]);
-
-  motors.print();
 }
 
-
-void eulerAngles()
-{
-  kinematicsAngle[XAXIS]  =  atan2(dcmRotation.data[7], dcmRotation.data[8]);
-  kinematicsAngle[YAXIS] =  -asin(dcmRotation.data[6]);
-  kinematicsAngle[ZAXIS]   =  atan2(dcmRotation.data[3], dcmRotation.data[0]);
+void eulerAngles() {
+  kinematicsAngle[XAXIS] = atan2(dcmRotation.data[7], dcmRotation.data[8]);
+  kinematicsAngle[YAXIS] = -asin(dcmRotation.data[6]);
+  kinematicsAngle[ZAXIS] = atan2(dcmRotation.data[3], dcmRotation.data[0]);
 
   print3vf('E', kinematicsAngle[0], kinematicsAngle[1], kinematicsAngle[2]);
 }
 
 #define GYRO_GAIN 5413
+#define GRAVITY 240
 void updateOrientation() {
   static uint32_t lastUpdate;
 
@@ -161,7 +175,21 @@ void updateOrientation() {
   base.transform(dcmRotation.data);
 
   // add PI from acceleration
+  float ax = compass.a.x;
+  float ay = compass.a.y;
+  float az = compass.a.z;
 
+  Vector3f pi;
+  pi.data[XAXIS] = compoutePID(ax, 0, &accelPidX, currentMicros);
+  pi.data[YAXIS] = compoutePID(ay, 0, &accelPidY, currentMicros);
+
+  float force = length(ax, ay, az) / GRAVITY;
+
+  // if the force is close to gravity, apply PID for drift correction
+  if (force > 0.5 && force < 1.5) {
+    print3vf('B', pi.data[XAXIS], pi.data[YAXIS], pi.data[ZAXIS]);
+  }
+  print3vf('F', force, 0, 0);
 
   print3vf('O', base.data[0], base.data[1], base.data[2]);
 
@@ -177,16 +205,20 @@ void perform50HzActions() {
   gyro.print();
 
   compass.readAcc();
-  print3vi('A', compass.a.x, compass.a.y, compass.a.z);
+  if (REPORTING & REPORT_SENSORS) {
+    print3vi('A', compass.a.x, compass.a.y, compass.a.z);
+  }
 
   compass.readMag();
-  print3vi('M', compass.m.x, compass.m.y, compass.m.z);
-
+  if (REPORTING & REPORT_SENSORS) {
+    print3vi('M', compass.m.x, compass.m.y, compass.m.z);
+  }
   // update orientation
   updateOrientation();
 
   // update motors with commands
   motors.updateMotors();
+  motors.print();
 }
 
 void loop() {

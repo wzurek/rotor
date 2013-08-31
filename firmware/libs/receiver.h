@@ -27,13 +27,9 @@
 #define CH_9 8
 #define CH_10 9
 
-#define FLAG_PRINT 1
-
 class Receiver {
 
 public:
-
-  uint32_t FLAGS;
 
   // define the receiver pins
   Receiver(uint32_t pin1, uint32_t pin2 = 0, uint32_t pin3 = 0, uint32_t pin4 =

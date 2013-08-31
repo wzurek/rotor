@@ -82,7 +82,6 @@ Receiver::Receiver(uint32_t pin1, uint32_t pin2, uint32_t pin3, uint32_t pin4,
     locValues[i] = 0;
   }
 
-  FLAGS = 0;
 }
 
 bool Receiver::hasNewData() {
@@ -133,9 +132,6 @@ void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
   }
   for (int i = 0; i < MAX_CHANNEL; i++) {
     toReturn[i] = locValues[i];
-  }
-  if (FLAGS&FLAG_PRINT) {
-    print();
   }
 }
 

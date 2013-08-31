@@ -40,7 +40,7 @@ union PID {
 float compoutePID(float value, float target, PID* pid, float currentTime) {
   float dt = currentTime - pid->lastTime;
 
-  if (pid->lastTime==0) {
+  if (pid->lastTime == 0) {
     pid->lastTime = currentTime;
     return 0;
   }
@@ -75,5 +75,9 @@ void print3vi(char cmd, int32_t v1, int32_t v2, int32_t v3) {
   Serial.print(",");
   Serial.print(v3);
   Serial.print("|");
+}
+
+float length(float x, float y, float z) {
+  return sqrt(x * x + y * y + z * z);
 }
 
