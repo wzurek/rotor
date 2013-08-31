@@ -24,6 +24,8 @@
 #define ROL_MAX 10
 #define YAV_MAX 10
 
+#define THROTTLE_MAX 1900
+
 
 class Motors {
 public:

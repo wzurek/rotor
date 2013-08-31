@@ -18,6 +18,10 @@ float mapStick(float value) {
   return result / REC_RANGE;
 }
 
+int mapSwitch(float value) {
+  return (value > REC_MID);
+}
+
 // map integer throttle stick to 0.0:1.0 range
 float mapThrottle(float value) {
   if (value < REC_MIN) {

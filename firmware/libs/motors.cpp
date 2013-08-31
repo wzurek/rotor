@@ -35,22 +35,37 @@ void Motors::arm() {
 void Motors::updateMotors() {
 
   if (!armed) {
-    return;
+    motor_throttle[FRONT_LEFT] = 0;
+    motor_throttle[FRONT_RIGHT] = 0;
+    motor_throttle[REAR_RIGHT] = 0;
+    motor_throttle[REAR_LEFT] = 0;
+
+  } else {
+
+    uint32_t base_throttle = (REC_MIN + REC_RANGE * throttle);
+    if (base_throttle > THROTTLE_MAX) {
+      base_throttle = THROTTLE_MAX + 1;
+    }
+
+    motor_throttle[FRONT_LEFT] = base_throttle + (pitch * PITCH_MAX)
+        + (rol * ROL_MAX);
+
+    motor_throttle[FRONT_RIGHT] = base_throttle + (pitch * PITCH_MAX)
+        - (rol * ROL_MAX);
+
+    motor_throttle[REAR_RIGHT] = base_throttle - (pitch * PITCH_MAX)
+        - (rol * ROL_MAX);
+
+    motor_throttle[REAR_LEFT] = base_throttle - (pitch * PITCH_MAX)
+        + (rol * ROL_MAX);
+
+    // check maxes
+    for (int i = 0; i < MOTOR_MAX; i++) {
+      if (motor_throttle[i] > THROTTLE_MAX) {
+        motor_throttle[i] = THROTTLE_MAX + 1;
+      }
+    }
   }
-
-  uint32_t base_throttle = (REC_MIN + REC_RANGE * throttle);
-
-  motor_throttle[FRONT_LEFT] = base_throttle + (pitch * PITCH_MAX)
-      + (rol * ROL_MAX);
-
-  motor_throttle[FRONT_RIGHT] = base_throttle + (pitch * PITCH_MAX)
-      - (rol * ROL_MAX);
-
-  motor_throttle[REAR_RIGHT] = base_throttle - (pitch * PITCH_MAX)
-      - (rol * ROL_MAX);
-
-  motor_throttle[REAR_LEFT] = base_throttle - (pitch * PITCH_MAX)
-      + (rol * ROL_MAX);
 
   // write to motors
   for (int i = 0; i < MOTOR_MAX; i++) {

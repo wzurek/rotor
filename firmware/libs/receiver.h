@@ -15,6 +15,7 @@
 #define REC_MIN 1100
 #define REC_MAX 1900
 #define REC_RANGE 800
+#define REC_MID 1500
 
 #define CH_PITCH 0
 #define CH_ROL 1

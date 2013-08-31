@@ -46,7 +46,7 @@ PID accelPidY;
 #define REPORT_SENSORS 1
 #define REPORT_RECEIVER 2
 
-uint32_t REPORTING = 0; //REPORT_SENSORS;// | REPORT_RECEIVER;
+uint32_t REPORTING = REPORT_RECEIVER; //REPORT_SENSORS;// | REPORT_RECEIVER;
 
 // current time
 uint32_t currentMicros;
@@ -143,10 +143,20 @@ void readReceiver() {
     receiver.print();
   }
 
-  motors.throttle = mapThrottle(channels[CH_THROTTLE]);
-  motors.pitch = mapStick(channels[CH_PITCH]);
-  motors.rol = mapStick(channels[CH_ROL]);
-  motors.yaw = mapStick(channels[CH_YAW]);
+  int motorsOn = mapSwitch(channels[CH_5]);
+  if (motorsOn && !motors.armed) {
+    motors.arm();
+  } else if (!motorsOn) {
+    motors.throttle = 0;
+    motors.pitch = 0;
+    motors.rol = 0;
+    motors.yaw = 0;
+  } else {
+    motors.throttle = mapThrottle(channels[CH_THROTTLE]);
+    motors.pitch = mapStick(channels[CH_PITCH]);
+    motors.rol = mapStick(channels[CH_ROL]);
+    motors.yaw = mapStick(channels[CH_YAW]);
+  }
 }
 
 void eulerAngles() {
