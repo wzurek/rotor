@@ -15,51 +15,77 @@
 
 GroundStationComm::GroundStationComm() {
   buff_index = 0;
+  cmd_index = 0;
+  cmd = '!';
   cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
 }
 
 void GroundStationComm::invokeCommand() {
-  Serial.print("Got command '");
-  Serial.print(cmd_buff[0]);
-  Serial.print("' with args '");
-  cmd_buff[buff_index] = 0;
-  Serial.print(cmd_buff+1);
+
+  switch(cmd) {
+  case 'K':
+    kinematicsGroundCommand();
+    break;
+  default:
+    Serial.print("!C'");
+    Serial.print(cmd);
+    Serial.print("','");
+    Serial.print(cmdArg + 1);
+    Serial.print("'|");
+  }
 }
 
 void GroundStationComm::processCmds() {
 
   if (Serial.available()) {
+    size_t size = Serial.readBytes(cmd_buff, CMD_BUFF_MAX);
+    buff_index = 0;
 
-    size_t size;
-    switch (cmd_read_state) {
+    while (buff_index < size) {
+      int c = cmd_buff[buff_index++];
 
-    case CMD_WAIT_FOR_CMD_BEGIN:
-      size = Serial.readBytesUntil(CMD_BEGIN, cmd_buff, CMD_BUFF_MAX);
-      if (size == 0) {
-        return;
-      } else if (cmd_buff[size - 1] == CMD_BEGIN) {
-        cmd_read_state = CMD_WAIT_FOR_CMD_END;
-      }
-      break;
+      switch (cmd_read_state) {
 
-    case CMD_WAIT_FOR_CMD_END:
-      size = Serial.readBytesUntil(CMD_BEGIN, cmd_buff + buff_index,
-          CMD_BUFF_MAX - buff_index);
-      buff_index += size;
-      if (buff_index >= CMD_BUFF_MAX) {
-        cmd_read_state = CMD_WAIT_FOR_CMD_END;
-        buff_index = 0;
-      } else if (cmd_buff[buff_index - 1] == CMD_END) {
-        invokeCommand();
+      case CMD_WAIT_FOR_CMD_BEGIN:
+        if (c == CMD_BEGIN) {
+          cmd_read_state = CMD_WAIT_FOR_CMD_END;
+          cmd_index = 0;
+          cmdArg[0] = 0;
+          cmd = ' ';
+        }
+        break;
+
+      case CMD_WAIT_FOR_CMD_END:
+        if (cmd_index == 0) {
+          cmd = c;
+          cmdArg[cmd_index++] = c;
+        } else if (cmd_index >= CMD_BUFF_MAX) {
+          cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
+          cmd = '!';
+          cmd_index = 0;
+          cmdArg[0] = 0;
+          break;
+        } else {
+          if (c == CMD_END) {
+            cmdArg[cmd_index] = 0;
+            invokeCommand();
+            cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
+            cmd = '!';
+            cmd_index = 0;
+            cmdArg[0] = 0;
+          } else {
+            cmdArg[cmd_index++] = c;
+          }
+        }
+        break;
+
+      default:
+        // should never happen
         cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
-        buff_index = 0;
+        cmd = ' ';
+        cmd_index = 0;
+        cmdArg[0] = 0;
       }
-      break;
-
-    default:
-      // should never happen
-      cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
-      buff_index = 0;
     }
   }
 }

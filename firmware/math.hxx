@@ -11,13 +11,13 @@ float fixReading(float value) {
   if (value < REC_MIN) {
     // error corrections, sometimes it loose 1000 ns
     if (value < REC_AB_MIN && value > REC_AB_MIN - REC_AB_RANGE) {
-      return mapStick(value + REC_AB_RANGE);
+      return value + REC_AB_RANGE;
     }
     value = REC_MIN;
   } else if (value > REC_MAX) {
     // error corrections, sometimes it loose 1000 ns
     if (value > REC_AB_MAX && value < REC_AB_MAX + REC_AB_RANGE) {
-      return mapStick(value - REC_AB_RANGE);
+      return value - REC_AB_RANGE;
     }
     value = REC_MAX;
   }
@@ -84,10 +84,12 @@ void print3vf(char cmd, float v1, float v2, float v3) {
   Serial.print(v3);
   Serial.print("|");
 }
+
 // print vector
 void print3vf(char cmd, Vector3f* v) {
   print3vf(cmd, v->data[XAXIS], v->data[YAXIS], v->data[ZAXIS]);
 }
+
 // print 3 values
 void print3vi(char cmd, int32_t v1, int32_t v2, int32_t v3) {
   Serial.print("!");
@@ -98,6 +100,15 @@ void print3vi(char cmd, int32_t v1, int32_t v2, int32_t v3) {
   Serial.print(",");
   Serial.print(v3);
   Serial.print("|");
+}
+
+// print vector
+void printVector(float* v) {
+  Serial.print(v[XAXIS]);
+  Serial.print(",");
+  Serial.print(v[YAXIS]);
+  Serial.print(",");
+  Serial.print(v[ZAXIS]);
 }
 
 float length(float x, float y, float z) {

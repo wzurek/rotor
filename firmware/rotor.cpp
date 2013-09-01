@@ -15,6 +15,7 @@
 #include "vector3f.h"
 #include "receiver.h"
 #include "motors.h"
+#include "ground_station.h"
 
 #include "global_objects.h"
 
@@ -282,6 +283,15 @@ void loop() {
     Serial.print(millis() - currentMillisTime);
     Serial.print("|\n");
 
+    groundStation.processCmds();
+
     next50Hz += DELAY_50HZ;
   }
+}
+
+void kinematicsGroundCommand() {
+  Serial.print("!C");
+  Serial.print("Accel base: ");
+  printVector(compass.accel_base.data);
+  Serial.print("|");
 }

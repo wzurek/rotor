@@ -9,13 +9,18 @@
 #define GROUND_STATION_H_
 
 #include <Arduino.h>
+#include "global_objects.h"
 
 #define CMD_BUFF_MAX 50
 
 class GroundStationComm {
 
   char cmd_buff[CMD_BUFF_MAX];
+  char cmdArg[CMD_BUFF_MAX];
+  char cmd;
+
   uint32_t buff_index;
+  uint32_t cmd_index;
   uint32_t cmd_read_state;
 
   void invokeCommand();

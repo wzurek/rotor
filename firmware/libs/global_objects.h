@@ -26,4 +26,7 @@ extern LSM303 compass;
 
 extern Motors motors;
 
+// some global functions
+void kinematicsGroundCommand();
+
 #endif /* GLOBAL_OBJECTS_H_ */
