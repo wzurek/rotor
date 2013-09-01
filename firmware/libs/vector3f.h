@@ -32,6 +32,7 @@ public:
   float dot(Vector3f b);
 
   void multiply(float dot);
+  float length();
   void substract(Vector3f* sub);
   void add(Vector3f* add);
   void normalize();

@@ -12,10 +12,17 @@
 
 #define MAX_CHANNEL 10
 
+// normal receiver ranges
 #define REC_MIN 1100
 #define REC_MAX 1900
 #define REC_RANGE 800
 #define REC_MID 1500
+
+// absolute receiver ranges
+#define REC_AB_MIN 1000
+#define REC_AB_MAX 2000
+#define REC_AB_RANGE 1000
+
 
 #define CH_PITCH 0
 #define CH_ROL 1

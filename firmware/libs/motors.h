@@ -17,8 +17,8 @@
 // Motor indexes
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
-#define REAR_RIGHT 2
-#define REAR_LEFT 3
+#define REAR_LEFT 2
+#define REAR_RIGHT 3
 
 #define PITCH_MAX 10
 #define ROL_MAX 10

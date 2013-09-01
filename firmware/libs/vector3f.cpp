@@ -71,12 +71,16 @@ void Vector3f::substract(Vector3f* sub) {
 }
 
 void Vector3f::normalize() {
-  double length = sqrt(
+  double len = length();
+  data[XAXIS] /= len;
+  data[YAXIS] /= len;
+  data[ZAXIS] /= len;
+}
+
+float Vector3f::length() {
+  return sqrt(
       data[XAXIS] * data[XAXIS] + data[YAXIS] * data[YAXIS]
           + data[ZAXIS] * data[ZAXIS]);
-  data[XAXIS] /= length;
-  data[YAXIS] /= length;
-  data[ZAXIS] /= length;
 }
 
 Matrix3f::Matrix3f() {

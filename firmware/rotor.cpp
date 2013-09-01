@@ -46,7 +46,7 @@ PID accelPidY;
 #define REPORT_SENSORS 1
 #define REPORT_RECEIVER 2
 
-uint32_t REPORTING = REPORT_RECEIVER; //REPORT_SENSORS;// | REPORT_RECEIVER;
+uint32_t REPORTING = REPORT_RECEIVER;//|REPORT_SENSORS;// | REPORT_RECEIVER;
 
 // current time
 uint32_t currentMicros;
@@ -167,12 +167,30 @@ void eulerAngles() {
   print3vf('E', kinematicsAngle[0], kinematicsAngle[1], kinematicsAngle[2]);
 }
 
+#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+
+#define GRAVITY 240
 void computeOmegas() {
 
-  Vector3f acc(compass.a.x, compass.a.y, -compass.a.z);
+  Vector3f acc(-compass.a.x, -compass.a.y, -compass.a.z);
   float weight = 1;
-  float kp = 0.05;
+  float kp = 0.1;
   float ki = 0.0001;
+
+  float len = acc.length() / GRAVITY;
+  acc.normalize();
+
+
+  if (len < 0.5 || len > 1.5) {
+    weight = 0;
+  } else {
+    if (len > 1) {
+      len = 1.5 - len;
+    } else {
+      len -= 0.5;
+    }
+    weight = len * 2;
+  }
 
   Vector3f err;
   acc.cross(&dcmRotation.data[6], err.data);
@@ -191,7 +209,6 @@ void computeOmegas() {
 }
 
 #define GYRO_GAIN 5413
-#define GRAVITY 240
 void updateOrientation() {
 
   static uint32_t lastUpdate;
