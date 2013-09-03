@@ -10,10 +10,10 @@
 
 void Motors::arm() {
   // attache ESCs
-  motor[0].attach(42);
-  motor[1].attach(40);
-  motor[2].attach(38);
-  motor[3].attach(36);
+  motor[FRONT_LEFT].attach(42);
+  motor[FRONT_RIGHT].attach(40);
+  motor[REAR_LEFT].attach(38);
+  motor[REAR_RIGHT].attach(36);
 
   // write 'minimum'
   for (int i = 0; i < MOTOR_MAX; i++) {
@@ -47,17 +47,20 @@ void Motors::updateMotors() {
       base_throttle = THROTTLE_MAX + 1;
     }
 
-    motor_throttle[FRONT_LEFT] = base_throttle + (pitch * PITCH_MAX)
-        + (rol * ROL_MAX);
+    float p = constrain(pitch, -1,1);
+    float r = constrain(rol, -1,1);
+    float y = constrain(yaw, -1,1);
 
-    motor_throttle[FRONT_RIGHT] = base_throttle + (pitch * PITCH_MAX)
-        - (rol * ROL_MAX);
+    motor_throttle[FRONT_LEFT] = base_throttle + (p * PITCH_MAX)
+        - (r * ROL_MAX);
 
-    motor_throttle[REAR_RIGHT] = base_throttle - (pitch * PITCH_MAX)
-        - (rol * ROL_MAX);
+    motor_throttle[FRONT_RIGHT] = base_throttle + (p * PITCH_MAX)
+        + (r * ROL_MAX);
 
-    motor_throttle[REAR_LEFT] = base_throttle - (pitch * PITCH_MAX)
-        + (rol * ROL_MAX);
+    motor_throttle[REAR_RIGHT] = base_throttle - (p * PITCH_MAX)
+        + (r * ROL_MAX);
+
+    motor_throttle[REAR_LEFT] = base_throttle - (p * PITCH_MAX) - (r * ROL_MAX);
 
     // check maxes
     for (int i = 0; i < MOTOR_MAX; i++) {

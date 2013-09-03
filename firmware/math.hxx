@@ -48,7 +48,10 @@ float mapThrottle(float value) {
   return result / REC_RANGE;
 }
 
-union PID {
+class PID {
+public:
+  PID(float p, float i, float d);
+
   float p, i, d;
 
   float previous_error;
@@ -56,7 +59,17 @@ union PID {
   float lastTime;
 };
 
-float compoutePID(float value, float target, PID* pid, float currentTime) {
+PID::PID(float p, float i, float d) {
+  this->d = d;
+  this->i = i;
+  this->p = p;
+  previous_error = 0;
+  integral = 0;
+  lastTime = 0;
+}
+
+
+float computePID(float value, float target, PID* pid, float currentTime) {
   float dt = currentTime - pid->lastTime;
 
   if (pid->lastTime == 0) {

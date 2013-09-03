@@ -26,6 +26,18 @@ extern LSM303 compass;
 
 extern Motors motors;
 
+// ------- navigation
+// current angles
+extern float kinematicsAngle[3];
+
+// ground angles (as it was when calibrating)
+extern float groundAngles[3];
+
+// target angles
+extern float targetAngles[3];
+
+
+
 // some global functions
 void kinematicsGroundCommand();
 

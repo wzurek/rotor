@@ -39,15 +39,23 @@ L3G gyro;
 LSM303 compass;
 Motors motors;
 
-PID accelPidX;
-PID accelPidY;
+PID accelPidX(10, 1, 0);
+PID accelPidY(10, 1, 0);
+
+PID pitchPID(1, 0.0, 200);
+PID rolPID(1, 0.0, 200);
+PID yawPID(1, 0.0, 200);
+
+PID stabilizePitchPID(2, 0.00, 1);
+PID stabilizeRolPID(2, 0.00, 1);
+PID stabilizeYawPID(2, 0.00, 1);
 
 // -------------
 
 #define REPORT_SENSORS 1
 #define REPORT_RECEIVER 2
 
-uint32_t REPORTING = REPORT_RECEIVER;//|REPORT_SENSORS;// | REPORT_RECEIVER;
+uint32_t REPORTING = REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER;
 
 // current time
 uint32_t currentMicros;
@@ -66,8 +74,20 @@ Vector3f omegaP;
 // accelerator accumulated drift correction
 Vector3f omegaI(0, 0, 0);
 
-// angles
+// gyro gain on last interval
+Vector3f gyroGain(0, 0, 0);
+
+// current angles
 float kinematicsAngle[3];
+
+// ground angles (as it was when calibrating)
+float groundAngles[3];
+
+// target angles
+float targetAngles[3];
+
+// max target angle
+#define MAX_ANGLE (HALF_PI/2)
 
 // loops constants
 #define DELAY_50HZ 20
@@ -92,22 +112,6 @@ void initCompass() {
   compass.writeMagReg(LSM303_MR_REG_M, 0x00); // continuous conversion mode
 
   compass.calibrateAccel();
-
-  accelPidX.p = 10;
-  accelPidX.i = 1;
-  accelPidX.d = 0;
-
-  accelPidX.integral = 0;
-  accelPidX.lastTime = 0;
-  accelPidX.previous_error = 0;
-
-  accelPidY.p = 10;
-  accelPidY.i = 1;
-  accelPidY.d = 0;
-
-  accelPidY.integral = 0;
-  accelPidY.lastTime = 0;
-  accelPidY.previous_error = 0;
 }
 
 void setup() {
@@ -127,9 +131,6 @@ void setup() {
   // init servos
   initGyro();
   initCompass();
-
-  // arm motors
-//  motors.arm();
 
   // schedule next 50Hz refresh
   next50Hz = 0;
@@ -154,9 +155,9 @@ void readReceiver() {
     motors.yaw = 0;
   } else {
     motors.throttle = mapThrottle(channels[CH_THROTTLE]);
-    motors.pitch = mapStick(channels[CH_PITCH]);
-    motors.rol = mapStick(channels[CH_ROL]);
-    motors.yaw = mapStick(channels[CH_YAW]);
+    targetAngles[PITCH] = mapStick(channels[CH_PITCH]) * MAX_ANGLE;
+    targetAngles[ROL] = -mapStick(channels[CH_ROL]) * MAX_ANGLE;
+    targetAngles[YAW] = mapStick(channels[CH_YAW]) * MAX_ANGLE;
   }
 }
 
@@ -180,7 +181,6 @@ void computeOmegas() {
 
   float len = acc.length() / GRAVITY;
   acc.normalize();
-
 
   if (len < 0.5 || len > 1.5) {
     weight = 0;
@@ -222,19 +222,24 @@ void updateOrientation() {
   yps = (yps / GYRO_GAIN) * PI * 2;
   zps = (zps / GYRO_GAIN) * PI * 2;
 
-  Vector3f g(xps, yps, zps);
+  gyroGain.data[XAXIS] = xps;
+  gyroGain.data[YAXIS] = yps;
+  gyroGain.data[ZAXIS] = zps;
 
   computeOmegas();
 
-  g.substract(&omegaP);
-  g.substract(&omegaI);
+  gyroGain.substract(&omegaP);
+  gyroGain.substract(&omegaI);
 
   float dt = (currentMicros - lastUpdate) / 1000000.0;
   lastUpdate = currentMicros;
 
-  g.multiply(dt);
+  Vector3f gt;
+  gt.copyFrom(gyroGain.data);
 
-  dcmRotation.applyRotation(g.data);
+  gt.multiply(dt);
+
+  dcmRotation.applyRotation(gt.data);
   dcmRotation.fixError();
 
   base.copyFrom(stabilise.data);
@@ -266,6 +271,23 @@ void perform50HzActions() {
 
   // update orientation
   updateOrientation();
+
+  // update motor
+  if (motors.armed) {
+    float pitchT = computePID(kinematicsAngle[PITCH], targetAngles[PITCH],
+        &pitchPID, currentMicros);
+    float rolT = computePID(kinematicsAngle[ROL], targetAngles[ROL], &rolPID,
+        currentMicros);
+    float yawT = computePID(kinematicsAngle[YAW], targetAngles[YAW], &yawPID,
+        currentMicros);
+
+    motors.pitch = computePID(pitchT, gyroGain.data[PITCH], &stabilizePitchPID,
+        currentMicros);
+    motors.rol = computePID(rolT, gyroGain.data[ROL], &stabilizeRolPID,
+        currentMicros);
+    motors.yaw = computePID(yawT, gyroGain.data[YAW], &stabilizeYawPID,
+        currentMicros);
+  }
 
   // update motors with commands
   motors.updateMotors();

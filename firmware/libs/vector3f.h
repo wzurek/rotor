@@ -14,6 +14,10 @@
 #define YAXIS 1
 #define ZAXIS 2
 
+#define ROL 0
+#define PITCH 1
+#define YAW 2
+
 class Vector3f {
 
 public:

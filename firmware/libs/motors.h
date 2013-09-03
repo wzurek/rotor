@@ -20,11 +20,11 @@
 #define REAR_LEFT 2
 #define REAR_RIGHT 3
 
-#define PITCH_MAX 10
-#define ROL_MAX 10
-#define YAV_MAX 10
+#define PITCH_MAX 20
+#define ROL_MAX 20
+#define YAV_MAX 20
 
-#define THROTTLE_MAX 1900
+#define THROTTLE_MAX 1500
 
 
 class Motors {
