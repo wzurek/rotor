@@ -16,23 +16,24 @@
 GroundStationComm::GroundStationComm() {
   buff_index = 0;
   cmd_index = 0;
-  cmd = '!';
+  cmd = CMD_BEGIN;
   cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
+  handlersCount = 0;
 }
 
 void GroundStationComm::invokeCommand() {
 
-  switch(cmd) {
-  case 'K':
-    kinematicsGroundCommand();
-    break;
-  default:
-    Serial.print("!C'");
-    Serial.print(cmd);
-    Serial.print("','");
-    Serial.print(cmdArg + 1);
-    Serial.print("'|");
+  for (int i = 0; i < handlersCount; i++) {
+    if (handlers[i].cmd == cmd) {
+      handlers[i].action(cmdArg + 1);
+      return;
+    }
   }
+  Serial.print("!C'");
+  Serial.print(cmd);
+  Serial.print("','");
+  Serial.print(cmdArg + 1);
+  Serial.print(CMD_END);
 }
 
 void GroundStationComm::processCmds() {
@@ -61,7 +62,7 @@ void GroundStationComm::processCmds() {
           cmdArg[cmd_index++] = c;
         } else if (cmd_index >= CMD_BUFF_MAX) {
           cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
-          cmd = '!';
+          cmd = CMD_BEGIN;
           cmd_index = 0;
           cmdArg[0] = 0;
           break;
@@ -70,7 +71,7 @@ void GroundStationComm::processCmds() {
             cmdArg[cmd_index] = 0;
             invokeCommand();
             cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
-            cmd = '!';
+            cmd = CMD_BEGIN;
             cmd_index = 0;
             cmdArg[0] = 0;
           } else {
@@ -93,3 +94,8 @@ void GroundStationComm::processCmds() {
 // global object
 GroundStationComm groundStation;
 
+void GroundStationComm::registerCommand(char cmd, handlerPtr handler) {
+  handlers[handlersCount].cmd = cmd;
+  handlers[handlersCount].action = handler;
+  handlersCount++;
+}

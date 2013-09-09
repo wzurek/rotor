@@ -7,6 +7,9 @@
 
 #include "receiver.h"
 
+#define CMD_BEGIN '!'
+#define CMD_END '|'
+
 float fixReading(float value) {
   if (value < REC_MIN) {
     // error corrections, sometimes it loose 1000 ns
@@ -57,7 +60,43 @@ public:
   float previous_error;
   float integral;
   float lastTime;
+
+  float computePID(float value, float target, float currentTime);
+  void print();
 };
+
+float PID::computePID(float value, float target, float currentTime) {
+  float dt = currentTime - lastTime;
+
+  if (lastTime == 0) {
+    lastTime = currentTime;
+    return 0;
+  }
+  lastTime = currentTime;
+
+  float error = target - value;
+  if (i != 0) {
+    integral += error * dt;
+  }
+  float derivate = (error - previous_error) / dt;
+  previous_error = error;
+
+  return p * error + i * integral + d * derivate;
+}
+
+void PID::print() {
+  Serial.print(p);
+  Serial.print(',');
+  Serial.print(i);
+  Serial.print(',');
+  Serial.print(d);
+  Serial.print(',');
+  Serial.print(previous_error);
+  Serial.print(',');
+  Serial.print(integral);
+  Serial.print(',');
+  Serial.print(lastTime);
+}
 
 PID::PID(float p, float i, float d) {
   this->d = d;
@@ -68,34 +107,16 @@ PID::PID(float p, float i, float d) {
   lastTime = 0;
 }
 
-
-float computePID(float value, float target, PID* pid, float currentTime) {
-  float dt = currentTime - pid->lastTime;
-
-  if (pid->lastTime == 0) {
-    pid->lastTime = currentTime;
-    return 0;
-  }
-  pid->lastTime = currentTime;
-
-  float error = target - value;
-  pid->integral += error * dt;
-  float derivate = (error - pid->previous_error) / dt;
-  pid->previous_error = error;
-
-  return pid->p * error + pid->i * pid->integral + pid->d * derivate;
-}
-
 // print 3 values
 void print3vf(char cmd, float v1, float v2, float v3) {
-  Serial.print("!");
+  Serial.print(CMD_BEGIN);
   Serial.print(cmd);
   Serial.print(v1);
-  Serial.print(",");
+  Serial.print(',');
   Serial.print(v2);
-  Serial.print(",");
+  Serial.print(',');
   Serial.print(v3);
-  Serial.print("|");
+  Serial.print(CMD_END);
 }
 
 // print vector
@@ -105,22 +126,22 @@ void print3vf(char cmd, Vector3f* v) {
 
 // print 3 values
 void print3vi(char cmd, int32_t v1, int32_t v2, int32_t v3) {
-  Serial.print("!");
+  Serial.print(CMD_BEGIN);
   Serial.print(cmd);
   Serial.print(v1);
-  Serial.print(",");
+  Serial.print(',');
   Serial.print(v2);
-  Serial.print(",");
+  Serial.print(',');
   Serial.print(v3);
-  Serial.print("|");
+  Serial.print(CMD_END);
 }
 
 // print vector
-void printVector(float* v) {
+void printVectorData(float* v) {
   Serial.print(v[XAXIS]);
-  Serial.print(",");
+  Serial.print(',');
   Serial.print(v[YAXIS]);
-  Serial.print(",");
+  Serial.print(',');
   Serial.print(v[ZAXIS]);
 }
 

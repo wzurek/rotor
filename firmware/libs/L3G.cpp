@@ -171,7 +171,7 @@ void L3G::calibrate() {
   printAll();
 }
 
-void L3G::print() {
+void L3G::printAll() {
   Serial.print("!G");
   Serial.print(g.x);
   Serial.print(",");
@@ -179,10 +179,6 @@ void L3G::print() {
   Serial.print(",");
   Serial.print(g.z);
   Serial.print("|");
-}
-
-void L3G::printAll() {
-  print();
   Serial.print("!GB");
   Serial.print(base.x);
   Serial.print(",");

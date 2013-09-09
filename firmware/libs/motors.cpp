@@ -32,6 +32,10 @@ void Motors::arm() {
   armed = true;
 }
 
+void Motors::disarm() {
+  armed = false;
+}
+
 void Motors::updateMotors() {
 
   if (!armed) {

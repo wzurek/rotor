@@ -73,7 +73,6 @@ class L3G
 
     // added functions
     void calibrate();
-    void print();
     void printAll();
 
     // vector functions

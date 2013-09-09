@@ -55,7 +55,7 @@ public:
 
   float data[9];
 
-  void print();
+  void print(char cmd);
   void multiply(float* m);
   void applyRotation(float* g);
   void applyRotation(float yaw, float pitch, float rol);

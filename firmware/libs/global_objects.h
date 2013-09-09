@@ -36,9 +36,21 @@ extern float groundAngles[3];
 // target angles
 extern float targetAngles[3];
 
+// PIDs
 
+class PID;
 
-// some global functions
-void kinematicsGroundCommand();
+extern PID pitchPID;
+extern PID rolPID;
+extern PID yawPID;
+
+extern PID stabilizePitchPID;
+extern PID stabilizeRolPID;
+extern PID stabilizeYawPID;
+
+extern PID *pids[];
+
+extern uint32_t REPORTING;
+
 
 #endif /* GLOBAL_OBJECTS_H_ */

@@ -93,7 +93,15 @@ Matrix3f::Matrix3f() {
   }
 }
 
-void Matrix3f::print() {
+void Matrix3f::print(char cmd) {
+  Serial.print("!");
+  Serial.print(cmd);
+  Serial.print(this->data[0]);
+  for (int i = 1; i < 9; i++) {
+    Serial.print(",");
+    Serial.print(this->data[i]);
+  }
+  Serial.print("|");
 }
 
 Matrix3f::Matrix3f(float v11, float v12, float v13, //

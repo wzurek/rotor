@@ -22,6 +22,8 @@ LSM303::LSM303(void) {
   m_min.y = -570;
   m_min.z = -770;
 
+  last_status = 0;
+
   _device = LSM303_DEVICE_AUTO;
   acc_address = ACC_ADDRESS_SA0_A_LOW;
 

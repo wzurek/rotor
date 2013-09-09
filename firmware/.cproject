@@ -3,9 +3,7 @@
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.toolchain.base.717271929">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.toolchain.base.717271929" moduleId="org.eclipse.cdt.core.settings" name="Default">
-				<externalSettings>
-					<externalSetting/>
-				</externalSettings>
+				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
@@ -33,7 +31,11 @@
 							<option id="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.option.addtools.createlisting.1529278091" name="Create Extended Listing" superClass="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.option.addtools.createlisting"/>
 							<option id="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.option.addtools.printsize.503935174" name="Print Size" superClass="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.option.addtools.printsize"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.GNU_ELF" id="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.platform.base.745745696" isAbstract="false" name="Mac OS X Platform" osList="macosx" superClass="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.platform.base"/>
-							<builder id="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.builder.base.72496015" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="ARM Yagarto Mac OS X GNU Make builder" superClass="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.builder.base"/>
+							<builder id="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.builder.base.72496015" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="ARM Yagarto Mac OS X GNU Make builder" superClass="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.builder.base">
+								<outputEntries>
+									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name=""/>
+								</outputEntries>
+							</builder>
 							<tool id="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.assembler.base.49342944" name="ARM Yagarto Mac OS X GCC Assembler" superClass="org.eclipse.cdt.cross.arm.gnu.yagarto.macosx.assembler.base">
 								<option id="org.eclipse.cdt.cross.arm.gnu.assembler.option.include.paths.1093146010" name="Include paths (-I)" superClass="org.eclipse.cdt.cross.arm.gnu.assembler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/Users/wzurek/Dev/ArdDue/hardware/tools/g++_arm_none_eabi/arm-none-eabi/include"/>

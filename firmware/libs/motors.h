@@ -42,6 +42,7 @@ public:
   void print();
 
   void arm();
+  void disarm();
   void updateMotors();
 
 };

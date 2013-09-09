@@ -13,6 +13,13 @@
 
 #define CMD_BUFF_MAX 50
 
+typedef void (*handlerPtr)(char[]);
+
+struct Handler {
+  char cmd;
+  handlerPtr action;
+};
+
 class GroundStationComm {
 
   char cmd_buff[CMD_BUFF_MAX];
@@ -23,12 +30,17 @@ class GroundStationComm {
   uint32_t cmd_index;
   uint32_t cmd_read_state;
 
+  uint32_t handlersCount;
+  Handler handlers[10];
+
   void invokeCommand();
 
 public:
   GroundStationComm();
+
   void processCmds();
 
+  void registerCommand(char cmd, handlerPtr handler);
 };
 
 // global object

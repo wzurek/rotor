@@ -19,6 +19,8 @@
 
 #include "global_objects.h"
 
+#include "cmds.hxx"
+
 #define RECEIVER_PIN1 51
 #define RECEIVER_PIN2 49
 #define RECEIVER_PIN3 47
@@ -39,8 +41,11 @@ L3G gyro;
 LSM303 compass;
 Motors motors;
 
-PID accelPidX(10, 1, 0);
-PID accelPidY(10, 1, 0);
+//PID accelPidX(10, 1, 0);
+//PID accelPidY(10, 1, 0);
+
+PID accelPID(0.1, 0.001, 0);
+Vector3f accelCorrection(0, 0, 0);
 
 PID pitchPID(1, 0.0, 200);
 PID rolPID(1, 0.0, 200);
@@ -50,12 +55,47 @@ PID stabilizePitchPID(2, 0.00, 1);
 PID stabilizeRolPID(2, 0.00, 1);
 PID stabilizeYawPID(2, 0.00, 1);
 
+PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID,
+    &stabilizeRolPID, &stabilizeYawPID, &accelPID };
+
 // -------------
 
+#define CMD_START 'S'
+#define CMD_SENSORS_GYRO 'G'
+#define CMD_SENSORS_ACC 'A'
+#define CMD_RECEIVER 'R'
+#define CMD_ANGLES 'E'
+#define CMD_MOTORS 'M'
+#define CMD_TIME 'T'
+#define CMD_DCM 'D'
+#define CMD_STABILIZATION 'Q'
+#define CMD_OMEGA 'O'
+
+//0
 #define REPORT_SENSORS 1
+
+//1
 #define REPORT_RECEIVER 2
 
-uint32_t REPORTING = REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER;
+//2
+#define REPORT_ANGLES 4
+
+//3
+#define REPORT_MOTORS 8
+
+//4
+#define REPORT_TIME 16
+
+//5
+#define REPORT_DCM 32
+
+//6
+#define REPORT_STABILIZATION 64
+
+//7
+#define REPORT_OMEGA 128
+
+uint32_t REPORTING = 0; // REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER;
 
 // current time
 uint32_t currentMicros;
@@ -120,7 +160,7 @@ void setup() {
   delay(200);
   Wire.begin();
 
-  Serial.println('S');
+  Serial.println(CMD_START);
   delay(100);
 
   // start listening to the receiver
@@ -134,6 +174,12 @@ void setup() {
 
   // schedule next 50Hz refresh
   next50Hz = 0;
+
+  // register ground station commands
+  groundStation.registerCommand('R', cmdUpdateReporting);
+  groundStation.registerCommand('M', cmdMotors);
+  groundStation.registerCommand('P', cmdUpdatePid);
+  groundStation.registerCommand('A', cmdUpdateAccelError);
 }
 
 void readReceiver() {
@@ -166,18 +212,23 @@ void eulerAngles() {
   kinematicsAngle[YAXIS] = -asin(dcmRotation.data[6]);
   kinematicsAngle[ZAXIS] = atan2(dcmRotation.data[3], dcmRotation.data[0]);
 
-  print3vf('E', kinematicsAngle[0], kinematicsAngle[1], kinematicsAngle[2]);
+  if (REPORTING & REPORT_ANGLES) {
+    print3vf(CMD_ANGLES, kinematicsAngle[0], kinematicsAngle[1],
+        kinematicsAngle[2]);
+  }
 }
 
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 
-#define GRAVITY 240
+#define GRAVITY 245
 void computeOmegas() {
 
   Vector3f acc(-compass.a.x, -compass.a.y, -compass.a.z);
+  acc.substract(&accelCorrection);
+
   float weight = 1;
-  float kp = 0.1;
-  float ki = 0.0001;
+  float kp = accelPID.p;
+  float ki = accelPID.i;
 
   float len = acc.length() / GRAVITY;
   acc.normalize();
@@ -207,6 +258,23 @@ void computeOmegas() {
 
   omegaP.data[ZAXIS] = 0;
   omegaI.data[ZAXIS] = 0;
+
+  if (REPORTING & REPORT_OMEGA) {
+    Serial.print(CMD_BEGIN);
+    Serial.print(CMD_OMEGA);
+    Serial.print(kp);
+    Serial.print(',');
+    Serial.print(ki);
+    Serial.print(',');
+    Serial.print(weight);
+    Serial.print(';');
+    accelCorrection.print();
+    Serial.print(';');
+    omegaP.print();
+    Serial.print(';');
+    omegaI.print();
+    Serial.print(CMD_END);
+  }
 }
 
 #define GYRO_GAIN 5413
@@ -242,6 +310,10 @@ void updateOrientation() {
   dcmRotation.applyRotation(gt.data);
   dcmRotation.fixError();
 
+  if (REPORTING & REPORT_DCM) {
+    dcmRotation.print(CMD_DCM);
+  }
+
   base.copyFrom(stabilise.data);
   base.transform(dcmRotation.data);
 
@@ -261,12 +333,12 @@ void perform50HzActions() {
   // read sensors
   gyro.read();
   if (REPORTING & REPORT_SENSORS) {
-    gyro.print();
+    print3vi(CMD_SENSORS_GYRO, gyro.g.x, gyro.g.y, gyro.g.z);
   }
 
   compass.readAcc();
   if (REPORTING & REPORT_SENSORS) {
-    print3vi('A', compass.a.x, compass.a.y, compass.a.z);
+    print3vi(CMD_SENSORS_ACC, compass.a.x, compass.a.y, compass.a.z);
   }
 
   // update orientation
@@ -274,24 +346,60 @@ void perform50HzActions() {
 
   // update motor
   if (motors.armed) {
-    float pitchT = computePID(kinematicsAngle[PITCH], targetAngles[PITCH],
-        &pitchPID, currentMicros);
-    float rolT = computePID(kinematicsAngle[ROL], targetAngles[ROL], &rolPID,
+    float pitchT = pitchPID.computePID(kinematicsAngle[PITCH],
+        targetAngles[PITCH], currentMicros);
+    float rolT = rolPID.computePID(kinematicsAngle[ROL], targetAngles[ROL],
         currentMicros);
-    float yawT = computePID(kinematicsAngle[YAW], targetAngles[YAW], &yawPID,
+    float yawT = yawPID.computePID(kinematicsAngle[YAW], targetAngles[YAW],
         currentMicros);
 
-    motors.pitch = computePID(pitchT, gyroGain.data[PITCH], &stabilizePitchPID,
+    motors.pitch = stabilizePitchPID.computePID(pitchT, gyroGain.data[PITCH],
         currentMicros);
-    motors.rol = computePID(rolT, gyroGain.data[ROL], &stabilizeRolPID,
+    motors.rol = stabilizeRolPID.computePID(rolT, gyroGain.data[ROL],
         currentMicros);
-    motors.yaw = computePID(yawT, gyroGain.data[YAW], &stabilizeYawPID,
+    motors.yaw = stabilizeYawPID.computePID(yawT, gyroGain.data[YAW],
         currentMicros);
+
+    if (REPORTING & REPORT_STABILIZATION) {
+      Serial.print(CMD_BEGIN);
+      Serial.print(CMD_STABILIZATION);
+      pitchPID.print();
+      Serial.print(';');
+      rolPID.print();
+      Serial.print(';');
+      yawPID.print();
+      Serial.print(';');
+      stabilizePitchPID.print();
+      Serial.print(';');
+      stabilizeRolPID.print();
+      Serial.print(';');
+      stabilizeYawPID.print();
+      Serial.print(';');
+
+      printVectorData(gyroGain.data);
+      Serial.print(';');
+
+      Serial.print(pitchT);
+      Serial.print(',');
+      Serial.print(rolT);
+      Serial.print(',');
+      Serial.print(yawT);
+      Serial.print(';');
+
+      Serial.print(motors.pitch);
+      Serial.print(',');
+      Serial.print(motors.rol);
+      Serial.print(',');
+      Serial.print(motors.yaw);
+      Serial.print(CMD_END);
+    }
   }
 
   // update motors with commands
   motors.updateMotors();
-  motors.print();
+  if (REPORTING & REPORT_MOTORS) {
+    motors.print();
+  }
 }
 
 void loop() {
@@ -299,21 +407,20 @@ void loop() {
   currentMicros = micros();
 
   if (currentMillisTime > next50Hz) {
+    if (REPORTING) {
+      Serial.print('\n');
+    }
     perform50HzActions();
 
-    Serial.print("!T");
-    Serial.print(millis() - currentMillisTime);
-    Serial.print("|\n");
+    if (REPORTING & REPORT_TIME) {
+      Serial.print('!');
+      Serial.print(CMD_TIME);
+      Serial.print(millis() - currentMillisTime);
+      Serial.print("|\n");
+    }
 
     groundStation.processCmds();
 
     next50Hz += DELAY_50HZ;
   }
-}
-
-void kinematicsGroundCommand() {
-  Serial.print("!C");
-  Serial.print("Accel base: ");
-  printVector(compass.accel_base.data);
-  Serial.print("|");
 }
