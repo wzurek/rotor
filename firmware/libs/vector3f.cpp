@@ -58,6 +58,14 @@ float Vector3f::dot(Vector3f b) {
       + data[ZAXIS] * b.data[ZAXIS];
 }
 
+void Vector3f::print() {
+  Serial.print(this->data[0]);
+  for (int i = 1; i < 3; i++) {
+    Serial.print(",");
+    Serial.print(this->data[i], 4);
+  }
+}
+
 void Vector3f::multiply(float dot) {
   data[XAXIS] *= dot;
   data[YAXIS] *= dot;

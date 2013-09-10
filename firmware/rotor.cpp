@@ -41,15 +41,15 @@ L3G gyro;
 LSM303 compass;
 Motors motors;
 
-//PID accelPidX(10, 1, 0);
-//PID accelPidY(10, 1, 0);
 
-PID accelPID(0.1, 0.001, 0);
-Vector3f accelCorrection(0, 0, 0);
+PID accelPID(3, 0.01, 0);
 
-PID pitchPID(1, 0.0, 200);
-PID rolPID(1, 0.0, 200);
-PID yawPID(1, 0.0, 200);
+// the values baced on experiments
+Vector3f accelCorrection(-7.8, -15.6, 0);
+
+PID pitchPID(3, 0.0, 200);
+PID rolPID(3, 0.0, 200);
+PID yawPID(3, 0.0, 200);
 
 PID stabilizePitchPID(2, 0.00, 1);
 PID stabilizeRolPID(2, 0.00, 1);
@@ -264,7 +264,7 @@ void computeOmegas() {
     Serial.print(CMD_OMEGA);
     Serial.print(kp);
     Serial.print(',');
-    Serial.print(ki);
+    Serial.print(ki, 4);
     Serial.print(',');
     Serial.print(weight);
     Serial.print(';');

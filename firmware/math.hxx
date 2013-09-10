@@ -91,11 +91,11 @@ void PID::print() {
   Serial.print(',');
   Serial.print(d);
   Serial.print(',');
-  Serial.print(previous_error);
+  Serial.print(previous_error, 4);
   Serial.print(',');
   Serial.print(integral);
   Serial.print(',');
-  Serial.print(lastTime);
+  Serial.print(lastTime, 0);
 }
 
 PID::PID(float p, float i, float d) {

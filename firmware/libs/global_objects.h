@@ -52,5 +52,6 @@ extern PID *pids[];
 
 extern uint32_t REPORTING;
 
+extern Vector3f accelCorrection;
 
 #endif /* GLOBAL_OBJECTS_H_ */

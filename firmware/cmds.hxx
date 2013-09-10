@@ -48,7 +48,10 @@ void cmdUpdateAccelError(char* arg) {
 
 void cmdUpdatePid(char* arg) {
   int index = *arg - '0';
-  if (index < 0 || index > 5) {
+  if (index < 0 || index > 6) {
+    Serial.print("!Cinvalid PID: ");
+    Serial.print(index);
+    Serial.print(CMD_END);
     return;
   }
   arg++;
