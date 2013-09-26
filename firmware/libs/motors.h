@@ -20,8 +20,8 @@
 #define REAR_LEFT 2
 #define REAR_RIGHT 3
 
-#define PITCH_MAX 20
-#define ROL_MAX 20
+#define PITCH_MAX 40
+#define ROL_MAX 40
 #define YAV_MAX 20
 
 #define THROTTLE_MAX 1500
@@ -29,6 +29,8 @@
 
 class Motors {
 public:
+  Motors();
+
   // desired pitch, rol, yaw and throttle
   float pitch;
   float rol;
@@ -36,6 +38,7 @@ public:
   float throttle;
 
   bool armed;
+  bool motorOn;
   Servo motor[MOTOR_MAX];
   uint32_t motor_throttle[MOTOR_MAX];
 

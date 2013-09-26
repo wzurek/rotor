@@ -36,6 +36,16 @@ void Motors::disarm() {
   armed = false;
 }
 
+Motors::Motors() {
+  yaw = 0;
+  pitch = 0;
+  rol = 0;
+
+  throttle = 0;
+  armed = false;
+  motorOn = true;
+}
+
 void Motors::updateMotors() {
 
   if (!armed) {
@@ -44,6 +54,11 @@ void Motors::updateMotors() {
     motor_throttle[REAR_RIGHT] = 0;
     motor_throttle[REAR_LEFT] = 0;
 
+  } else if (!motorOn) {
+    motor_throttle[FRONT_LEFT] = 1100;
+    motor_throttle[FRONT_RIGHT] = 1100;
+    motor_throttle[REAR_RIGHT] = 1100;
+    motor_throttle[REAR_LEFT] = 1000;
   } else {
 
     uint32_t base_throttle = (REC_MIN + REC_RANGE * throttle);

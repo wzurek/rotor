@@ -41,19 +41,14 @@ L3G gyro;
 LSM303 compass;
 Motors motors;
 
-
-PID accelPID(3, 0.01, 0);
+PID accelPID(5, 0.01, 0);
 
 // the values baced on experiments
 Vector3f accelCorrection(-7.8, -15.6, 0);
 
-PID pitchPID(3, 0.0, 200);
-PID rolPID(3, 0.0, 200);
-PID yawPID(3, 0.0, 200);
-
-PID stabilizePitchPID(2, 0.00, 1);
-PID stabilizeRolPID(2, 0.00, 1);
-PID stabilizeYawPID(2, 0.00, 1);
+PID pitchPID(10, 0.0, 2);
+PID rolPID(10, 0.0, 2);
+PID yawPID(10, 0.0, 2);
 
 PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID,
     &stabilizeRolPID, &stabilizeYawPID, &accelPID };
@@ -127,7 +122,7 @@ float groundAngles[3];
 float targetAngles[3];
 
 // max target angle
-#define MAX_ANGLE (HALF_PI/2)
+#define MAX_ANGLE (HALF_PI/8)
 
 // loops constants
 #define DELAY_50HZ 20
@@ -191,10 +186,10 @@ void readReceiver() {
     receiver.print();
   }
 
-  int motorsOn = mapSwitch(channels[CH_5]);
-  if (motorsOn && !motors.armed) {
+  motors.motorOn = mapSwitch(channels[CH_5]);
+  if (motors.motorOn && !motors.armed) {
     motors.arm();
-  } else if (!motorsOn) {
+  } else if (!motors.motorOn) {
     motors.throttle = 0;
     motors.pitch = 0;
     motors.rol = 0;
@@ -213,8 +208,8 @@ void eulerAngles() {
   kinematicsAngle[ZAXIS] = atan2(dcmRotation.data[3], dcmRotation.data[0]);
 
   if (REPORTING & REPORT_ANGLES) {
-    print3vf(CMD_ANGLES, kinematicsAngle[0], kinematicsAngle[1],
-        kinematicsAngle[2]);
+    print3vf(CMD_ANGLES, kinematicsAngle[XAXIS], kinematicsAngle[YAXIS],
+        kinematicsAngle[ZAXIS]);
   }
 }
 
@@ -346,19 +341,13 @@ void perform50HzActions() {
 
   // update motor
   if (motors.armed) {
-    float pitchT = pitchPID.computePID(kinematicsAngle[PITCH],
-        targetAngles[PITCH], currentMicros);
-    float rolT = rolPID.computePID(kinematicsAngle[ROL], targetAngles[ROL],
+    motors.pitch = pitchPID.computePID(
+        kinematicsAngle[PITCH] + gyroGain.data[PITCH], targetAngles[PITCH],
         currentMicros);
-    float yawT = yawPID.computePID(kinematicsAngle[YAW], targetAngles[YAW],
-        currentMicros);
-
-    motors.pitch = stabilizePitchPID.computePID(pitchT, gyroGain.data[PITCH],
-        currentMicros);
-    motors.rol = stabilizeRolPID.computePID(rolT, gyroGain.data[ROL],
-        currentMicros);
-    motors.yaw = stabilizeYawPID.computePID(yawT, gyroGain.data[YAW],
-        currentMicros);
+    motors.rol = rolPID.computePID(kinematicsAngle[ROL] + gyroGain.data[ROL],
+        targetAngles[ROL], currentMicros);
+    motors.yaw = yawPID.computePID(kinematicsAngle[YAW] + gyroGain.data[YAW],
+        targetAngles[YAW], currentMicros);
 
     if (REPORTING & REPORT_STABILIZATION) {
       Serial.print(CMD_BEGIN);
@@ -369,21 +358,8 @@ void perform50HzActions() {
       Serial.print(';');
       yawPID.print();
       Serial.print(';');
-      stabilizePitchPID.print();
-      Serial.print(';');
-      stabilizeRolPID.print();
-      Serial.print(';');
-      stabilizeYawPID.print();
-      Serial.print(';');
 
       printVectorData(gyroGain.data);
-      Serial.print(';');
-
-      Serial.print(pitchT);
-      Serial.print(',');
-      Serial.print(rolT);
-      Serial.print(',');
-      Serial.print(yawT);
       Serial.print(';');
 
       Serial.print(motors.pitch);
