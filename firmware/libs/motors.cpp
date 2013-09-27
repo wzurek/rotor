@@ -23,9 +23,9 @@ void Motors::arm() {
 
   // wait for ESCs to boot
   Serial.println("booting speed controllers");
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 10; i++) {
     Serial.print(".");
-    delay(1000);
+    delay(500);
   }
   Serial.println(" done.");
 
@@ -95,6 +95,7 @@ void Motors::updateMotors() {
   }
 }
 
+// print throttle and the instruction
 void Motors::print() {
   Serial.print("!M");
   Serial.print(motor_throttle[0]);
@@ -102,6 +103,14 @@ void Motors::print() {
     Serial.print(",");
     Serial.print(motor_throttle[i]);
   }
+  Serial.print(",");
+  Serial.print(throttle);
+  Serial.print(",");
+  Serial.print(pitch);
+  Serial.print(",");
+  Serial.print(rol);
+  Serial.print(",");
+  Serial.print(yaw);
   Serial.print("|");
 }
 

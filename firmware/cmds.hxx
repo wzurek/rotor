@@ -46,6 +46,10 @@ void cmdUpdateAccelError(char* arg) {
   accelCorrection.data[ZAXIS] = z;
 }
 
+void cmdUpdateGyroScale(char* arg) {
+  gyroScale = strtof(arg, &arg);
+}
+
 void cmdUpdatePid(char* arg) {
   int index = *arg - '0';
   if (index < 0 || index > 6) {

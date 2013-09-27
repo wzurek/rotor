@@ -121,6 +121,9 @@ float groundAngles[3];
 // target angles
 float targetAngles[3];
 
+// scale of the gyro component for PID
+float gyroScale = 1;
+
 // max target angle
 #define MAX_ANGLE (HALF_PI/8)
 
@@ -175,6 +178,7 @@ void setup() {
   groundStation.registerCommand('M', cmdMotors);
   groundStation.registerCommand('P', cmdUpdatePid);
   groundStation.registerCommand('A', cmdUpdateAccelError);
+  groundStation.registerCommand('G', cmdUpdateGyroScale);
 }
 
 void readReceiver() {
@@ -342,11 +346,13 @@ void perform50HzActions() {
   // update motor
   if (motors.armed) {
     motors.pitch = pitchPID.computePID(
-        kinematicsAngle[PITCH] + gyroGain.data[PITCH], targetAngles[PITCH],
-        currentMicros);
-    motors.rol = rolPID.computePID(kinematicsAngle[ROL] + gyroGain.data[ROL],
+        kinematicsAngle[PITCH] + gyroGain.data[PITCH] * gyroScale,
+        targetAngles[PITCH], currentMicros);
+    motors.rol = rolPID.computePID(
+        kinematicsAngle[ROL] + gyroGain.data[ROL] * gyroScale,
         targetAngles[ROL], currentMicros);
-    motors.yaw = yawPID.computePID(kinematicsAngle[YAW] + gyroGain.data[YAW],
+    motors.yaw = yawPID.computePID(
+        kinematicsAngle[YAW] + gyroGain.data[YAW] * gyroScale,
         targetAngles[YAW], currentMicros);
 
     if (REPORTING & REPORT_STABILIZATION) {
@@ -362,11 +368,19 @@ void perform50HzActions() {
       printVectorData(gyroGain.data);
       Serial.print(';');
 
-      Serial.print(motors.pitch);
+      Serial.print(motors.pitch, 5);
       Serial.print(',');
-      Serial.print(motors.rol);
+      Serial.print(motors.rol, 5);
       Serial.print(',');
-      Serial.print(motors.yaw);
+      Serial.print(motors.yaw, 5);
+      Serial.print(';');
+      Serial.print(gyroScale);
+      Serial.print(';');
+      Serial.print(targetAngles[PITCH], 5);
+      Serial.print(',');
+      Serial.print(targetAngles[ROL], 5);
+      Serial.print(',');
+      Serial.print(targetAngles[YAW], 5);
       Serial.print(CMD_END);
     }
   }

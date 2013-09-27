@@ -54,4 +54,6 @@ extern uint32_t REPORTING;
 
 extern Vector3f accelCorrection;
 
+extern float gyroScale;
+
 #endif /* GLOBAL_OBJECTS_H_ */
