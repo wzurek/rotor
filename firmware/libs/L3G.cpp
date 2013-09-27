@@ -99,9 +99,26 @@ void L3G::read() {
   r.y = (int16_t) (yhg << 8 | ylg);
   r.z = (int16_t) (zhg << 8 | zlg);
 
-  g.x = r.x - base.x;
-  g.y = r.y - base.y;
-  g.z = r.z - base.z;
+  buffer[bufferIndex].x = r.x - base.x;
+  buffer[bufferIndex].y = r.y - base.y;
+  buffer[bufferIndex].z = r.z - base.z;
+
+  bufferIndex++;
+  if (bufferIndex >= bufferSize) {
+    bufferIndex = 0;
+  }
+
+  g.x = 0;
+  g.y = 0;
+  g.z = 0;
+  for (int i = 0; i < bufferSize; i++) {
+    g.x += buffer[i].x;
+    g.y += buffer[i].y;
+    g.z += buffer[i].z;
+  }
+  g.x /= bufferSize;
+  g.y /= bufferSize;
+  g.z /= bufferSize;
 }
 
 void L3G::vector_cross(const vector *a, const vector *b, vector *out) {
@@ -168,6 +185,13 @@ void L3G::calibrate() {
       base.z += diff / 2;
     }
   }
+
+  for (int i = 0; i < bufferSize; i++) {
+    buffer[i].x = 0;
+    buffer[i].y = 0;
+    buffer[i].z = 0;
+  }
+
   printAll();
 }
 

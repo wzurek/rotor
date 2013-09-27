@@ -29,6 +29,14 @@ LSM303::LSM303(void) {
 
   io_timeout = 0;  // 0 = no timeout
   did_timeout = false;
+
+  bufferIndex = 0;
+
+  for (int i = 0; i < bufferSize; i++) {
+    buffer[i].x = 0;
+    buffer[i].y = 0;
+    buffer[i].z = 0;
+  }
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -200,9 +208,28 @@ void LSM303::readAcc(void) {
   // combine high and low bytes, then shift right to discard lowest 4 bits (which are meaningless)
   // GCC performs an arithmetic right shift for signed negative numbers, but this code will not work
   // if you port it to a compiler that does a logical right shift instead.
-  a.x = ((int16_t) (xha << 8 | xla)) >> 4;
-  a.y = ((int16_t) (yha << 8 | yla)) >> 4;
-  a.z = ((int16_t) (zha << 8 | zla)) >> 4;
+
+  buffer[bufferIndex].x = ((int16_t) (xha << 8 | xla)) >> 4;
+  buffer[bufferIndex].y = ((int16_t) (yha << 8 | yla)) >> 4;
+  buffer[bufferIndex].z = ((int16_t) (zha << 8 | zla)) >> 4;
+
+  bufferIndex++;
+  if (bufferIndex >= bufferSize) {
+    bufferIndex = 0;
+  }
+
+  a.x = 0;
+  a.y = 0;
+  a.z = 0;
+  for (int i = 0; i < bufferSize; i++) {
+    a.x += buffer[i].x;
+    a.y += buffer[i].y;
+    a.z += buffer[i].z;
+  }
+  a.x /= bufferSize;
+  a.y /= bufferSize;
+  a.z /= bufferSize;
+
 
 //  a.x -= accel_base.data[XAXIS];
 //  a.y -= accel_base.data[YAXIS];

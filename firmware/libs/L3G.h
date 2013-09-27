@@ -84,6 +84,10 @@ class L3G
       byte _device; // chip type (4200D or D20)
       byte address;
 
+      const static int bufferSize = 3;
+      int bufferIndex;
+      vector buffer[bufferSize];
+
       bool autoDetectAddress(void);
 };
 

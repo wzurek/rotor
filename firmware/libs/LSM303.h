@@ -159,6 +159,10 @@ class LSM303
     unsigned int io_timeout;
     bool did_timeout;
     
+    const static int bufferSize = 3;
+    int bufferIndex;
+    vector buffer[bufferSize];
+
     byte detectSA0_A(void);
 };
 
