@@ -37,9 +37,16 @@ public:
   float yaw;
   float throttle;
 
+  // true, which is equal to '!armed' until set to false
+  bool failSafeStart;
+
+  // true, if the motors are armed
   bool armed;
-  bool motorOn;
+
+  // use each motor as servo
   Servo motor[MOTOR_MAX];
+
+  // speed of each motor
   uint32_t motor_throttle[MOTOR_MAX];
 
   void print();

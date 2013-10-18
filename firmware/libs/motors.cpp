@@ -9,6 +9,12 @@
 #include "receiver.h"
 
 void Motors::arm() {
+
+  if (failSafeStart) {
+    // don't arm during failsafe start
+    return;
+  }
+
   // attache ESCs
   motor[FRONT_LEFT].attach(42);
   motor[FRONT_RIGHT].attach(40);
@@ -43,7 +49,7 @@ Motors::Motors() {
 
   throttle = 0;
   armed = false;
-  motorOn = true;
+  failSafeStart = true;
 }
 
 void Motors::updateMotors() {
@@ -54,11 +60,6 @@ void Motors::updateMotors() {
     motor_throttle[REAR_RIGHT] = 0;
     motor_throttle[REAR_LEFT] = 0;
 
-  } else if (!motorOn) {
-    motor_throttle[FRONT_LEFT] = 1100;
-    motor_throttle[FRONT_RIGHT] = 1100;
-    motor_throttle[REAR_RIGHT] = 1100;
-    motor_throttle[REAR_LEFT] = 1000;
   } else {
 
     uint32_t base_throttle = (REC_MIN + REC_RANGE * throttle);
@@ -70,16 +71,16 @@ void Motors::updateMotors() {
     float r = constrain(rol, -1,1);
     float y = constrain(yaw, -1,1);
 
-    motor_throttle[FRONT_LEFT] = base_throttle + (p * PITCH_MAX)
+    motor_throttle[FRONT_LEFT] = base_throttle - (p * PITCH_MAX)
+        + (r * ROL_MAX);
+
+    motor_throttle[FRONT_RIGHT] = base_throttle - (p * PITCH_MAX)
         - (r * ROL_MAX);
 
-    motor_throttle[FRONT_RIGHT] = base_throttle + (p * PITCH_MAX)
-        + (r * ROL_MAX);
+    motor_throttle[REAR_RIGHT] = base_throttle + (p * PITCH_MAX)
+        - (r * ROL_MAX);
 
-    motor_throttle[REAR_RIGHT] = base_throttle - (p * PITCH_MAX)
-        + (r * ROL_MAX);
-
-    motor_throttle[REAR_LEFT] = base_throttle - (p * PITCH_MAX) - (r * ROL_MAX);
+    motor_throttle[REAR_LEFT] = base_throttle + (p * PITCH_MAX) + (r * ROL_MAX);
 
     // check maxes
     for (int i = 0; i < MOTOR_MAX; i++) {

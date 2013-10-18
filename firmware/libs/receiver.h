@@ -23,7 +23,6 @@
 #define REC_AB_MAX 2000
 #define REC_AB_RANGE 1000
 
-
 #define CH_PITCH 0
 #define CH_ROL 1
 #define CH_THROTTLE 2
@@ -47,9 +46,6 @@ public:
   // start reading
   void start();
 
-  // read single channel
-  uint32_t read(uint32_t channel);
-
   // read all channels at once
   void readAll(uint32_t values[MAX_CHANNEL]);
 
@@ -58,6 +54,14 @@ public:
 
   // print status to serial port
   void print();
+
+  // if the receiver is connected.
+  // false from boot until the connection has been made, true afterwards (even if the connection is lost)
+  bool connected;
+
+  // true if the receiver was connected, but connection has been lost
+  // should be used for fail-safe mode
+  bool connectionLost;
 
 private:
 

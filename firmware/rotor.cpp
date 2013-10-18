@@ -41,14 +41,14 @@ L3G gyro;
 LSM303 compass;
 Motors motors;
 
-PID accelPID(5, 0.01, 0);
+PID accelPID(4, 0.01, 0);
 
 // the values baced on experiments
-Vector3f accelCorrection(-7.8, -15.6, 0);
+Vector3f accelCorrection(-7.8, -16.1, 0);
 
-PID pitchPID(10, 0.0, 2);
-PID rolPID(10, 0.0, 2);
-PID yawPID(10, 0.0, 2);
+PID pitchPID(1, 0.0, 0.1);
+PID rolPID(1, 0.0, 0.1);
+PID yawPID(1, 0.0, 0.1);
 
 PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID,
     &stabilizeRolPID, &stabilizeYawPID, &accelPID };
@@ -122,7 +122,7 @@ float groundAngles[3];
 float targetAngles[3];
 
 // scale of the gyro component for PID
-float gyroScale = 1;
+float gyroScale = 0.2;
 
 // max target angle
 #define MAX_ANGLE (HALF_PI/8)
@@ -190,19 +190,29 @@ void readReceiver() {
     receiver.print();
   }
 
-  motors.motorOn = mapSwitch(channels[CH_5]);
-  if (motors.motorOn && !motors.armed) {
-    motors.arm();
-  } else if (!motors.motorOn) {
-    motors.throttle = 0;
-    motors.pitch = 0;
-    motors.rol = 0;
-    motors.yaw = 0;
-  } else {
-    motors.throttle = mapThrottle(channels[CH_THROTTLE]);
-    targetAngles[PITCH] = mapStick(channels[CH_PITCH]) * MAX_ANGLE;
-    targetAngles[ROL] = -mapStick(channels[CH_ROL]) * MAX_ANGLE;
-    targetAngles[YAW] = mapStick(channels[CH_YAW]) * MAX_ANGLE;
+  bool swOn = mapSwitch(channels[CH_5]);
+
+  // continue failsafe mode until the stick is on low position at least once.
+  if (motors.failSafeStart) {
+    if (!swOn && receiver.connected) {
+      motors.failSafeStart = false;
+    }
+  }
+
+  if (!motors.failSafeStart) {
+    if (swOn && !motors.armed) {
+      motors.arm();
+    } else if (swOn) {
+      motors.throttle = mapThrottle(channels[CH_THROTTLE]);
+      targetAngles[PITCH] = mapStick(channels[CH_PITCH]) * MAX_ANGLE;
+      targetAngles[ROL] = -mapStick(channels[CH_ROL]) * MAX_ANGLE;
+      targetAngles[YAW] = mapStick(channels[CH_YAW]) * MAX_ANGLE;
+    } else {
+      motors.throttle = 0;
+      motors.pitch = 0;
+      motors.rol = 0;
+      motors.yaw = 0;
+    }
   }
 }
 

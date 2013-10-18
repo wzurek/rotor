@@ -77,6 +77,9 @@ Receiver::Receiver(uint32_t pin1, uint32_t pin2, uint32_t pin3, uint32_t pin4,
   Receiver::pins[8] = pin9;
   Receiver::pins[9] = pin10;
 
+  connected = false;
+  connectionLost = false;
+
   for (int i = 0; i < MAX_CHANNEL; i++) {
     Receiver::values[i] = 0;
     locValues[i] = 0;
@@ -89,6 +92,7 @@ bool Receiver::hasNewData() {
 }
 
 void Receiver::start() {
+
   if (pins[0])
     attachInterrupt(pins[0], interruptHandler1, CHANGE);
   if (pins[1])
@@ -111,16 +115,6 @@ void Receiver::start() {
     attachInterrupt(pins[9], interruptHandler10, CHANGE);
 }
 
-uint32_t Receiver::read(uint32_t channel) {
-  if (bUpdateFlagsShared & 1 << channel) {
-    noInterrupts();
-    locValues[channel] = values[channel];
-    bUpdateFlagsShared &= !(1 << channel);
-    interrupts();
-  }
-  return locValues[channel];
-}
-
 void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
   if (bUpdateFlagsShared) {
     noInterrupts();
@@ -129,6 +123,9 @@ void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
     }
     bUpdateFlagsShared = 0;
     interrupts();
+  }
+  if (!connected && locValues[0] > 1000) {
+    connected = true;
   }
   for (int i = 0; i < MAX_CHANNEL; i++) {
     toReturn[i] = locValues[i];
