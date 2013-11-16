@@ -12,6 +12,7 @@
 // rcarduino.blogspot.com
 //
 #include "receiver.h"
+#include "global_objects.h"
 
 // channel to pin mapping
 uint32_t Receiver::pins[MAX_CHANNEL];
@@ -117,11 +118,13 @@ void Receiver::start() {
 
 void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
   if (bUpdateFlagsShared) {
+    // for some reason Eclipse does not recognize thos function
     noInterrupts();
     for (int i = 0; i < MAX_CHANNEL; i++) {
       locValues[i] = values[i];
     }
     bUpdateFlagsShared = 0;
+    // for some reason Eclipse does not recognize thos function
     interrupts();
   }
   if (!connected && locValues[0] > 1000) {
@@ -133,11 +136,9 @@ void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
 }
 
 void Receiver::print() {
-  Serial.print("!R");
-  Serial.print(locValues[0]);
-  for (int i = 1; i < MAX_CHANNEL; i++) {
-    Serial.print(",");
-    Serial.print(locValues[i]);
-  }
-  Serial.print("|");
+
+  groundStation.beginMessage(6); // message R
+  groundStation.writeVIntsField(1, locValues, MAX_CHANNEL);
+  groundStation.finishMessage();
+
 }

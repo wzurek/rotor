@@ -7,6 +7,7 @@
 
 #include "motors.h"
 #include "receiver.h"
+#include "global_objects.h"
 
 void Motors::arm() {
 
@@ -28,12 +29,12 @@ void Motors::arm() {
   }
 
   // wait for ESCs to boot
-  Serial.println("booting speed controllers");
+  groundStation.textMessage("booting speed controllers");
   for (int i = 0; i < 10; i++) {
-    Serial.print(".");
+    groundStation.textMessage(".");
     delay(500);
   }
-  Serial.println(" done.");
+  groundStation.textMessage("booting done");
 
   armed = true;
 }
@@ -98,20 +99,13 @@ void Motors::updateMotors() {
 
 // print throttle and the instruction
 void Motors::print() {
-  Serial.print("!M");
-  Serial.print(motor_throttle[0]);
-  for (int i = 1; i < MOTOR_MAX; i++) {
-    Serial.print(",");
-    Serial.print(motor_throttle[i]);
-  }
-  Serial.print(",");
-  Serial.print(throttle);
-  Serial.print(",");
-  Serial.print(pitch);
-  Serial.print(",");
-  Serial.print(rol);
-  Serial.print(",");
-  Serial.print(yaw);
-  Serial.print("|");
+
+  groundStation.beginMessage(4); // motors M
+  groundStation.writeVIntsField(1,motor_throttle,MOTOR_MAX);
+  groundStation.writeFloatField(2, throttle);
+  groundStation.writeFloatField(3, pitch);
+  groundStation.writeFloatField(4, rol);
+  groundStation.writeFloatField(5, yaw);
+  groundStation.finishMessage();
 }
 

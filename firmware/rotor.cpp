@@ -133,7 +133,7 @@ uint32_t next50Hz;
 
 void initGyro() {
   if (!gyro.init(L3GD20_DEVICE, L3G_SA0_HIGH)) {
-    Serial.println("Failed to auto-detect gyroscope type!");
+    groundStation.textMessage("Failed to auto-detect gyroscope type!");
     while (1)
       ;
   }
@@ -158,13 +158,16 @@ void setup() {
   delay(200);
   Wire.begin();
 
-  Serial.println(CMD_START);
+  // send begin of transmission command
+  uint8_t start = 0xAA;
+  groundStation.writeBytes(&start, 1);
+
   delay(100);
 
   // start listening to the receiver
   receiver.start();
   delay(10);
-  Serial.println("receiver started.");
+  groundStation.textMessage("receiver started");
 
   // init servos
   initGyro();
@@ -174,11 +177,11 @@ void setup() {
   next50Hz = 0;
 
   // register ground station commands
-  groundStation.registerCommand('R', cmdUpdateReporting);
-  groundStation.registerCommand('M', cmdMotors);
-  groundStation.registerCommand('P', cmdUpdatePid);
-  groundStation.registerCommand('A', cmdUpdateAccelError);
-  groundStation.registerCommand('G', cmdUpdateGyroScale);
+//  groundStation.registerCommand('R', cmdUpdateReporting);
+//  groundStation.registerCommand('M', cmdMotors);
+//  groundStation.registerCommand('P', cmdUpdatePid);
+//  groundStation.registerCommand('A', cmdUpdateAccelError);
+//  groundStation.registerCommand('G', cmdUpdateGyroScale);
 }
 
 void readReceiver() {
@@ -269,20 +272,20 @@ void computeOmegas() {
   omegaI.data[ZAXIS] = 0;
 
   if (REPORTING & REPORT_OMEGA) {
-    Serial.print(CMD_BEGIN);
-    Serial.print(CMD_OMEGA);
-    Serial.print(kp);
-    Serial.print(',');
-    Serial.print(ki, 4);
-    Serial.print(',');
-    Serial.print(weight);
-    Serial.print(';');
-    accelCorrection.print();
-    Serial.print(';');
-    omegaP.print();
-    Serial.print(';');
-    omegaI.print();
-    Serial.print(CMD_END);
+//    Serial.print(CMD_BEGIN);
+//    Serial.print(CMD_OMEGA);
+//    Serial.print(kp);
+//    Serial.print(',');
+//    Serial.print(ki, 4);
+//    Serial.print(',');
+//    Serial.print(weight);
+//    Serial.print(';');
+//    accelCorrection.print();
+//    Serial.print(';');
+//    omegaP.print();
+//    Serial.print(';');
+//    omegaI.print();
+//    Serial.print(CMD_END);
   }
 }
 
@@ -366,32 +369,32 @@ void perform50HzActions() {
         targetAngles[YAW], currentMicros);
 
     if (REPORTING & REPORT_STABILIZATION) {
-      Serial.print(CMD_BEGIN);
-      Serial.print(CMD_STABILIZATION);
-      pitchPID.print();
-      Serial.print(';');
-      rolPID.print();
-      Serial.print(';');
-      yawPID.print();
-      Serial.print(';');
-
-      printVectorData(gyroGain.data);
-      Serial.print(';');
-
-      Serial.print(motors.pitch, 5);
-      Serial.print(',');
-      Serial.print(motors.rol, 5);
-      Serial.print(',');
-      Serial.print(motors.yaw, 5);
-      Serial.print(';');
-      Serial.print(gyroScale);
-      Serial.print(';');
-      Serial.print(targetAngles[PITCH], 5);
-      Serial.print(',');
-      Serial.print(targetAngles[ROL], 5);
-      Serial.print(',');
-      Serial.print(targetAngles[YAW], 5);
-      Serial.print(CMD_END);
+//      Serial.print(CMD_BEGIN);
+//      Serial.print(CMD_STABILIZATION);
+//      pitchPID.print();
+//      Serial.print(';');
+//      rolPID.print();
+//      Serial.print(';');
+//      yawPID.print();
+//      Serial.print(';');
+//
+//      printVectorData(gyroGain.data);
+//      Serial.print(';');
+//
+//      Serial.print(motors.pitch, 5);
+//      Serial.print(',');
+//      Serial.print(motors.rol, 5);
+//      Serial.print(',');
+//      Serial.print(motors.yaw, 5);
+//      Serial.print(';');
+//      Serial.print(gyroScale);
+//      Serial.print(';');
+//      Serial.print(targetAngles[PITCH], 5);
+//      Serial.print(',');
+//      Serial.print(targetAngles[ROL], 5);
+//      Serial.print(',');
+//      Serial.print(targetAngles[YAW], 5);
+//      Serial.print(CMD_END);
     }
   }
 
@@ -408,15 +411,15 @@ void loop() {
 
   if (currentMillisTime > next50Hz) {
     if (REPORTING) {
-      Serial.print('\n');
+//      Serial.print('\n');
     }
     perform50HzActions();
 
     if (REPORTING & REPORT_TIME) {
-      Serial.print('!');
-      Serial.print(CMD_TIME);
-      Serial.print(millis() - currentMillisTime);
-      Serial.print("|\n");
+//      Serial.print('!');
+//      Serial.print(CMD_TIME);
+//      Serial.print(millis() - currentMillisTime);
+//      Serial.print("|\n");
     }
 
     groundStation.processCmds();

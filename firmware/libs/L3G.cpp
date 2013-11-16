@@ -2,6 +2,8 @@
 #include <Wire.h>
 #include <math.h>
 
+#include "global_objects.h"
+
 // Defines ////////////////////////////////////////////////////////////////
 
 // The Arduino two-wire interface uses a 7-bit number for the address,
@@ -159,7 +161,9 @@ bool L3G::autoDetectAddress(void) {
 }
 
 void L3G::calibrate() {
-  Serial.println("Calibrating gyro");
+
+  groundStation.textMessage("Calibrating gyro");
+
   delay(100);
   read();
   base.x = r.x;
@@ -196,25 +200,16 @@ void L3G::calibrate() {
 }
 
 void L3G::printAll() {
-  Serial.print("!G");
-  Serial.print(g.x);
-  Serial.print(",");
-  Serial.print(g.y);
-  Serial.print(",");
-  Serial.print(g.z);
-  Serial.print("|");
-  Serial.print("!GB");
-  Serial.print(base.x);
-  Serial.print(",");
-  Serial.print(base.y);
-  Serial.print(",");
-  Serial.print(base.z);
-  Serial.print("|");
-  Serial.print("!GR");
-  Serial.print(r.x);
-  Serial.print(",");
-  Serial.print(r.y);
-  Serial.print(",");
-  Serial.print(r.z);
-  Serial.print("|\n");
+
+  groundStation.beginMessage(3); //G
+  groundStation.writeVIntField(1, g.x);
+  groundStation.writeVIntField(2, g.y);
+  groundStation.writeVIntField(3, g.z);
+  groundStation.writeVIntField(4, base.x);
+  groundStation.writeVIntField(5, base.y);
+  groundStation.writeVIntField(6, base.z);
+  groundStation.writeVIntField(7, r.x);
+  groundStation.writeVIntField(8, r.y);
+  groundStation.writeVIntField(9, r.z);
+  groundStation.finishMessage();
 }

@@ -12,9 +12,9 @@ void cmdUpdateReporting(char* arg) {
     arg++;
   }
 
-  Serial.print("!C");
-  Serial.print(REPORTING);
-  Serial.print("|");
+//  Serial.print("!C");
+//  Serial.print(REPORTING);
+//  Serial.print("|");
 }
 
 void cmdMotors(char* arg) {
@@ -53,9 +53,9 @@ void cmdUpdateGyroScale(char* arg) {
 void cmdUpdatePid(char* arg) {
   int index = *arg - '0';
   if (index < 0 || index > 6) {
-    Serial.print("!Cinvalid PID: ");
-    Serial.print(index);
-    Serial.print(CMD_END);
+//    Serial.print("!Cinvalid PID: ");
+//    Serial.print(index);
+//    Serial.print(CMD_END);
     return;
   }
   arg++;
@@ -86,15 +86,15 @@ void cmdUpdatePid(char* arg) {
   pid->i = i;
   pid->d = d;
 
-  Serial.print("!Cupdated PID ");
-  Serial.print(index);
-  Serial.print(':');
-  Serial.print(p);
-  Serial.print(',');
-  Serial.print(i);
-  Serial.print(',');
-  Serial.print(d);
-  Serial.print(',');
-  Serial.print(reset);
-  Serial.print('|');
+//  Serial.print("!Cupdated PID ");
+//  Serial.print(index);
+//  Serial.print(':');
+//  Serial.print(p);
+//  Serial.print(',');
+//  Serial.print(i);
+//  Serial.print(',');
+//  Serial.print(d);
+//  Serial.print(',');
+//  Serial.print(reset);
+//  Serial.print('|');
 }

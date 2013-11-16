@@ -59,11 +59,11 @@ float Vector3f::dot(Vector3f b) {
 }
 
 void Vector3f::print() {
-  Serial.print(this->data[0]);
-  for (int i = 1; i < 3; i++) {
-    Serial.print(",");
-    Serial.print(this->data[i], 4);
-  }
+//  Serial.print(this->data[0]);
+//  for (int i = 1; i < 3; i++) {
+//    Serial.print(",");
+//    Serial.print(this->data[i], 4);
+//  }
 }
 
 void Vector3f::multiply(float dot) {
@@ -102,14 +102,14 @@ Matrix3f::Matrix3f() {
 }
 
 void Matrix3f::print(char cmd) {
-  Serial.print("!");
-  Serial.print(cmd);
-  Serial.print(this->data[0]);
-  for (int i = 1; i < 9; i++) {
-    Serial.print(",");
-    Serial.print(this->data[i]);
-  }
-  Serial.print("|");
+//  Serial.print("!");
+//  Serial.print(cmd);
+//  Serial.print(this->data[0]);
+//  for (int i = 1; i < 9; i++) {
+//    Serial.print(",");
+//    Serial.print(this->data[i]);
+//  }
+//  Serial.print("|");
 }
 
 Matrix3f::Matrix3f(float v11, float v12, float v13, //

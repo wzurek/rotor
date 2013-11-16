@@ -85,17 +85,17 @@ float PID::computePID(float value, float target, float currentTime) {
 }
 
 void PID::print() {
-  Serial.print(p);
-  Serial.print(',');
-  Serial.print(i);
-  Serial.print(',');
-  Serial.print(d);
-  Serial.print(',');
-  Serial.print(previous_error, 4);
-  Serial.print(',');
-  Serial.print(integral);
-  Serial.print(',');
-  Serial.print(lastTime, 0);
+//  Serial.print(p);
+//  Serial.print(',');
+//  Serial.print(i);
+//  Serial.print(',');
+//  Serial.print(d);
+//  Serial.print(',');
+//  Serial.print(previous_error, 4);
+//  Serial.print(',');
+//  Serial.print(integral);
+//  Serial.print(',');
+//  Serial.print(lastTime, 0);
 }
 
 PID::PID(float p, float i, float d) {
@@ -109,14 +109,14 @@ PID::PID(float p, float i, float d) {
 
 // print 3 values
 void print3vf(char cmd, float v1, float v2, float v3) {
-  Serial.print(CMD_BEGIN);
-  Serial.print(cmd);
-  Serial.print(v1);
-  Serial.print(',');
-  Serial.print(v2);
-  Serial.print(',');
-  Serial.print(v3);
-  Serial.print(CMD_END);
+//  Serial.print(CMD_BEGIN);
+//  Serial.print(cmd);
+//  Serial.print(v1);
+//  Serial.print(',');
+//  Serial.print(v2);
+//  Serial.print(',');
+//  Serial.print(v3);
+//  Serial.print(CMD_END);
 }
 
 // print vector
@@ -126,26 +126,39 @@ void print3vf(char cmd, Vector3f* v) {
 
 // print 3 values
 void print3vi(char cmd, int32_t v1, int32_t v2, int32_t v3) {
-  Serial.print(CMD_BEGIN);
-  Serial.print(cmd);
-  Serial.print(v1);
-  Serial.print(',');
-  Serial.print(v2);
-  Serial.print(',');
-  Serial.print(v3);
-  Serial.print(CMD_END);
+//  Serial.print(CMD_BEGIN);
+//  Serial.print(cmd);
+//  Serial.print(v1);
+//  Serial.print(',');
+//  Serial.print(v2);
+//  Serial.print(',');
+//  Serial.print(v3);
+//  Serial.print(CMD_END);
 }
 
 // print vector
 void printVectorData(float* v) {
-  Serial.print(v[XAXIS]);
-  Serial.print(',');
-  Serial.print(v[YAXIS]);
-  Serial.print(',');
-  Serial.print(v[ZAXIS]);
+//  Serial.print(v[XAXIS]);
+//  Serial.print(',');
+//  Serial.print(v[YAXIS]);
+//  Serial.print(',');
+//  Serial.print(v[ZAXIS]);
 }
 
 float length(float x, float y, float z) {
   return sqrt(x * x + y * y + z * z);
 }
 
+
+uint32_t readVuint32(uint8_t *buff, int32_t &val) {
+  val = 0;
+  uint8_t *b = buff;
+  while (*b & 0x80) {
+    val <<= 7;
+    val |= (*b & 0x7f);
+    b++;
+  }
+  val <<= 7;
+  val |= (*b & 0x7f);
+  return b - buff + 1;
+}

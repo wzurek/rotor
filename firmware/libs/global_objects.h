@@ -8,6 +8,7 @@
 #ifndef GLOBAL_OBJECTS_H_
 #define GLOBAL_OBJECTS_H_
 
+#include "ground_station.h"
 #include "receiver.h"
 #include "L3G.h"
 #include "LSM303.h"
@@ -55,5 +56,8 @@ extern uint32_t REPORTING;
 extern Vector3f accelCorrection;
 
 extern float gyroScale;
+
+extern GroundStationComm groundStation;
+
 
 #endif /* GLOBAL_OBJECTS_H_ */
