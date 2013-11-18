@@ -169,7 +169,7 @@ void L3G::calibrate() {
   base.x = r.x;
   base.y = r.y;
   base.z = r.z;
-  printAll();
+//  printAll();
 
   int16_t diff;
   for (int i = 0; i < 10; i++) {
@@ -201,15 +201,15 @@ void L3G::calibrate() {
 
 void L3G::printAll() {
 
-  groundStation.beginMessage(3); //G
-  groundStation.writeVIntField(1, g.x);
-  groundStation.writeVIntField(2, g.y);
-  groundStation.writeVIntField(3, g.z);
-  groundStation.writeVIntField(4, base.x);
-  groundStation.writeVIntField(5, base.y);
-  groundStation.writeVIntField(6, base.z);
-  groundStation.writeVIntField(7, r.x);
-  groundStation.writeVIntField(8, r.y);
-  groundStation.writeVIntField(9, r.z);
+  groundStation.beginMessage(CMD_GYRO); //G
+  groundStation.writeVInt16Field(1, g.x);
+  groundStation.writeVInt16Field(2, g.y);
+  groundStation.writeVInt16Field(3, g.z);
+  groundStation.writeVInt16Field(4, base.x);
+  groundStation.writeVInt16Field(5, base.y);
+  groundStation.writeVInt16Field(6, base.z);
+  groundStation.writeVInt16Field(7, r.x);
+  groundStation.writeVInt16Field(8, r.y);
+  groundStation.writeVInt16Field(9, r.z);
   groundStation.finishMessage();
 }

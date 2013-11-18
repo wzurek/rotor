@@ -137,7 +137,7 @@ void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
 
 void Receiver::print() {
 
-  groundStation.beginMessage(6); // message R
+  groundStation.beginMessage(CMD_RECEIVER); // message R
   groundStation.writeVIntsField(1, locValues, MAX_CHANNEL);
   groundStation.finishMessage();
 

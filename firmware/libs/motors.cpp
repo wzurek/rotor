@@ -100,7 +100,7 @@ void Motors::updateMotors() {
 // print throttle and the instruction
 void Motors::print() {
 
-  groundStation.beginMessage(4); // motors M
+  groundStation.beginMessage(CMD_MOTOR); // motors M
   groundStation.writeVIntsField(1,motor_throttle,MOTOR_MAX);
   groundStation.writeFloatField(2, throttle);
   groundStation.writeFloatField(3, pitch);
