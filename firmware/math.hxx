@@ -7,6 +7,8 @@
 
 #include "receiver.h"
 
+#include "global_objects.h"
+
 #define CMD_BEGIN '!'
 #define CMD_END '|'
 
@@ -107,33 +109,32 @@ PID::PID(float p, float i, float d) {
   lastTime = 0;
 }
 
-// print 3 values
-void print3vf(char cmd, float v1, float v2, float v3) {
-//  Serial.print(CMD_BEGIN);
-//  Serial.print(cmd);
-//  Serial.print(v1);
-//  Serial.print(',');
-//  Serial.print(v2);
-//  Serial.print(',');
-//  Serial.print(v3);
-//  Serial.print(CMD_END);
+void print3vf(uint32_t cmd, float* v) {
+  groundStation.beginMessage(cmd);
+  groundStation.writeFloatsField(1, v, 3);
+  groundStation.finishMessage();
 }
 
 // print vector
-void print3vf(char cmd, Vector3f* v) {
-  print3vf(cmd, v->data[XAXIS], v->data[YAXIS], v->data[ZAXIS]);
+void print3vf(uint32_t cmd, Vector3f* v) {
+  print3vf(cmd, v->data);
 }
 
 // print 3 values
-void print3vi(char cmd, int32_t v1, int32_t v2, int32_t v3) {
-//  Serial.print(CMD_BEGIN);
-//  Serial.print(cmd);
-//  Serial.print(v1);
-//  Serial.print(',');
-//  Serial.print(v2);
-//  Serial.print(',');
-//  Serial.print(v3);
-//  Serial.print(CMD_END);
+void print3vi(uint32_t cmd, int32_t v1, int32_t v2, int32_t v3) {
+
+  // 3 vints, max 15 bytes.
+  uint8_t buff[15];
+
+  uint32_t size = 0;
+
+  size += groundStation.appendVint32(v1, buff);
+  size += groundStation.appendVint32(v2, buff + size);
+  size += groundStation.appendVint32(v3, buff + size);
+
+  groundStation.beginMessage(cmd);
+  groundStation.writeFixedField(1, size, buff);
+  groundStation.finishMessage();
 }
 
 // print vector
@@ -148,7 +149,6 @@ void printVectorData(float* v) {
 float length(float x, float y, float z) {
   return sqrt(x * x + y * y + z * z);
 }
-
 
 uint32_t readVuint32(uint8_t *buff, int32_t &val) {
   val = 0;

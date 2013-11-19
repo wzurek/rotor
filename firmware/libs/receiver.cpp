@@ -118,13 +118,13 @@ void Receiver::start() {
 
 void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
   if (bUpdateFlagsShared) {
-    // for some reason Eclipse does not recognize thos function
+    // for some reason Eclipse does not recognize those function
     noInterrupts();
     for (int i = 0; i < MAX_CHANNEL; i++) {
       locValues[i] = values[i];
     }
     bUpdateFlagsShared = 0;
-    // for some reason Eclipse does not recognize thos function
+    // for some reason Eclipse does not recognize those function
     interrupts();
   }
   if (!connected && locValues[0] > 1000) {
@@ -136,9 +136,7 @@ void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
 }
 
 void Receiver::print() {
-
   groundStation.beginMessage(CMD_RECEIVER); // message R
   groundStation.writeVIntsField(1, locValues, MAX_CHANNEL);
   groundStation.finishMessage();
-
 }

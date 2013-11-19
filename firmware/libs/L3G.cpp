@@ -197,11 +197,12 @@ void L3G::calibrate() {
   }
 
   printAll();
+  groundStation.textMessage("Gyro calibrated");
 }
 
 void L3G::printAll() {
 
-  groundStation.beginMessage(CMD_GYRO); //G
+  groundStation.beginMessage(CMD_SENSORS_GYRO); //G
   groundStation.writeVInt16Field(1, g.x);
   groundStation.writeVInt16Field(2, g.y);
   groundStation.writeVInt16Field(3, g.z);

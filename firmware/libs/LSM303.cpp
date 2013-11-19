@@ -2,6 +2,8 @@
 #include <Wire.h>
 #include <math.h>
 
+#include "global_objects.h"
+
 // Defines ////////////////////////////////////////////////////////////////
 
 // The Arduino two-wire interface uses a 7-bit number for the address, 
@@ -362,6 +364,8 @@ byte LSM303::detectSA0_A(void) {
 
 void LSM303::calibrateAccel() {
 
+  groundStation.textMessage("Calibrating accel");
+
   accel_base.data[XAXIS] = 0;
   accel_base.data[YAXIS] = 0;
   accel_base.data[ZAXIS] = 0;
@@ -377,5 +381,7 @@ void LSM303::calibrateAccel() {
   accel_base.data[XAXIS] /= 32;
   accel_base.data[YAXIS] /= 32;
   accel_base.data[ZAXIS] /= 32;
+
+  groundStation.textMessage("Accel calibrated");
 
 }

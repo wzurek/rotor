@@ -203,6 +203,9 @@ void GroundStationComm::writeBytes(uint8_t* buff, size_t size) {
   // write to serial port
   // for some reason eclipse does not recognize this function.
   Serial.write(buff, size);
+
+  // for communication stats
+  sentBytes += size;
 }
 
 void GroundStationComm::finishMessage() {
@@ -252,6 +255,12 @@ void GroundStationComm::writeFloat(float val) {
 void GroundStationComm::writeVUInt16Field(uint32_t id, uint16_t val) {
   beginField(id, FIELD_VINT);
   writeVUInt16(val);
+}
+
+uint32_t GroundStationComm::bytesSent() {
+  uint32_t result = sentBytes;
+  sentBytes = 0;
+  return result;
 }
 
 void GroundStationComm::writeVInt16Field(uint32_t id, int16_t val) {

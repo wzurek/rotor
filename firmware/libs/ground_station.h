@@ -19,10 +19,17 @@
 
 // IDs os commands
 #define CMD_TEXT 1
-#define CMD_TIMER 2
-#define CMD_GYRO 3
-#define CMD_MOTOR 4
-#define CMD_RECEIVER 5
+#define CMD_START 'S'
+#define CMD_SENSORS_GYRO 'G'
+#define CMD_SENSORS_ACC 'A'
+#define CMD_RECEIVER 'R'
+#define CMD_ANGLES 'E'
+#define CMD_MOTORS 'M'
+#define CMD_TIME 'T'
+#define CMD_DCM 'D'
+#define CMD_STABILIZATION 'Q'
+#define CMD_OMEGA 'O'
+
 
 typedef void (*handlerPtr)(char[]);
 
@@ -41,17 +48,21 @@ class GroundStationComm {
   uint32_t cmd_index;
   uint32_t cmd_read_state;
 
+  uint32_t sentBytes;
+
   uint32_t handlersCount;
   Handler handlers[10];
 
   void invokeCommand();
 
+
+public:
   uint32_t appendVuint32(uint32_t val, uint8_t *buff);
   uint32_t appendVint32(int32_t val, uint8_t *buff);
   uint32_t appendVuint16(uint16_t val, uint8_t *buff);
   uint32_t appendVint16(int16_t val, uint8_t *buff);
 
-public:
+
   GroundStationComm();
 
   void processCmds();
@@ -88,6 +99,8 @@ public:
   void writeBytes(uint8_t *buff, size_t size);
 
   void finishMessage();
+
+  uint32_t bytesSent();
 };
 
 // global object

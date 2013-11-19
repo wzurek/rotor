@@ -53,17 +53,6 @@ PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID, &stabilizeRolPI
 
 // -------------
 
-#define CMD_START 'S'
-#define CMD_SENSORS_GYRO 'G'
-#define CMD_SENSORS_ACC 'A'
-#define CMD_RECEIVER 'R'
-#define CMD_ANGLES 'E'
-#define CMD_MOTORS 'M'
-#define CMD_TIME 'T'
-#define CMD_DCM 'D'
-#define CMD_STABILIZATION 'Q'
-#define CMD_OMEGA 'O'
-
 //0
 #define REPORT_SENSORS 1
 
@@ -88,7 +77,7 @@ PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID, &stabilizeRolPI
 //7
 #define REPORT_OMEGA 128
 
-uint32_t REPORTING = 0; // REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER;
+uint32_t REPORTING = REPORT_ANGLES | REPORT_TIME; // REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER;
 
 // current time
 uint32_t currentMicros;
@@ -157,12 +146,11 @@ void setup() {
   Wire.begin();
 
   // send begin of transmission command
-  uint8_t start[] = { 0xAA, 0xAA, 0xAA, 0xAA, 0xAA };
+  uint8_t start[] = { 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, };
   groundStation.writeBytes(start, 5);
   delay(30);
   groundStation.writeBytes(start, 5);
-
-  delay(300);
+  delay(100);
 
   // start listening to the receiver
   receiver.start();
@@ -182,6 +170,8 @@ void setup() {
 //  groundStation.registerCommand('P', cmdUpdatePid);
 //  groundStation.registerCommand('A', cmdUpdateAccelError);
 //  groundStation.registerCommand('G', cmdUpdateGyroScale);
+
+  groundStation.textMessage("Finished setup");
 }
 
 void readReceiver() {
@@ -190,7 +180,7 @@ void readReceiver() {
   // get new data from receiver
   receiver.readAll(channels);
   if (REPORTING & REPORT_RECEIVER) {
-//    receiver.print();
+    receiver.print();
   }
 
   bool swOn = mapSwitch(channels[CH_5]);
@@ -225,7 +215,7 @@ void eulerAngles() {
   kinematicsAngle[ZAXIS] = atan2(dcmRotation.data[3], dcmRotation.data[0]);
 
   if (REPORTING & REPORT_ANGLES) {
-    print3vf(CMD_ANGLES, kinematicsAngle[XAXIS], kinematicsAngle[YAXIS], kinematicsAngle[ZAXIS]);
+    print3vf(CMD_ANGLES, kinematicsAngle);
   }
 }
 
@@ -397,7 +387,7 @@ void perform50HzActions() {
   // update motors with commands
   motors.updateMotors();
   if (REPORTING & REPORT_MOTORS) {
-//    motors.print();
+    motors.print();
   }
 }
 
@@ -407,29 +397,19 @@ void loop() {
   uint32_t currentMillisTime = millis();
   currentMicros = micros();
 
-
   if (currentMillisTime > next50Hz) {
-    if (REPORTING) {
-//      Serial.print('\n');
-    }
-
-    if (sec-- <= 0) {
-      groundStation.beginMessage(CMD_TIMER);
-      groundStation.writeVUInt32Field(1, currentMillisTime);
-      groundStation.finishMessage();
-      sec = 50;
-    }
 
     perform50HzActions();
 
     if (REPORTING & REPORT_TIME) {
-//      Serial.print('!');
-//      Serial.print(CMD_TIME);
-//      Serial.print(millis() - currentMillisTime);
-//      Serial.print("|\n");
+      groundStation.beginMessage(CMD_TIME);
+      groundStation.writeVUInt32Field(1, currentMillisTime);
+      groundStation.writeVUInt32Field(2, millis() - currentMillisTime);
+      groundStation.writeVUInt32Field(3, groundStation.bytesSent());
+      groundStation.finishMessage();
     }
 
-//    groundStation.processCmds();
+    groundStation.processCmds();
 
     next50Hz += DELAY_50HZ;
   }
