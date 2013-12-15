@@ -118,9 +118,37 @@ void L3G::read() {
     g.y += buffer[i].y;
     g.z += buffer[i].z;
   }
-  g.x /= bufferSize;
-  g.y /= bufferSize;
-  g.z /= bufferSize;
+
+//  // exclude min and max
+//  int16_t minx, maxx, miny, maxy, minz, maxz;
+//  minx = maxx = buffer[0].x;
+//  miny = maxy = buffer[0].y;
+//  minz = maxz = buffer[0].z;
+//  for (int i = 1; i < bufferSize; i++) {
+//    if (buffer[i].x < minx) {
+//      minx = buffer[i].x;
+//    } else if (buffer[i].x > maxx) {
+//      maxx = buffer[i].x;
+//    }
+//    if (buffer[i].y < miny) {
+//      miny = buffer[i].y;
+//    } else if (buffer[i].y > maxy) {
+//      maxy = buffer[i].y;
+//    }
+//    if (buffer[i].z < minz) {
+//      minz = buffer[i].z;
+//    } else if (buffer[i].z > maxz) {
+//      maxz = buffer[i].z;
+//    }
+//  }
+//  g.x -= minx + maxx;
+//  g.y -= miny + maxy;
+//  g.z -= minz + maxz;
+
+  // take average of the rest
+  g.x /= (bufferSize );
+  g.y /= (bufferSize );
+  g.z /= (bufferSize );
 }
 
 void L3G::vector_cross(const vector *a, const vector *b, vector *out) {
@@ -202,15 +230,15 @@ void L3G::calibrate() {
 
 void L3G::printAll() {
 
-  groundStation.beginMessage(CMD_SENSORS_GYRO); //G
-  groundStation.writeVInt16Field(1, g.x);
-  groundStation.writeVInt16Field(2, g.y);
-  groundStation.writeVInt16Field(3, g.z);
-  groundStation.writeVInt16Field(4, base.x);
-  groundStation.writeVInt16Field(5, base.y);
-  groundStation.writeVInt16Field(6, base.z);
-  groundStation.writeVInt16Field(7, r.x);
-  groundStation.writeVInt16Field(8, r.y);
-  groundStation.writeVInt16Field(9, r.z);
-  groundStation.finishMessage();
+//  groundStation.beginMessage(CMD_SENSORS_GYRO); //G
+//  groundStation.writeVInt16Field(1, g.x);
+//  groundStation.writeVInt16Field(2, g.y);
+//  groundStation.writeVInt16Field(3, g.z);
+//  groundStation.writeVInt16Field(4, base.x);
+//  groundStation.writeVInt16Field(5, base.y);
+//  groundStation.writeVInt16Field(6, base.z);
+//  groundStation.writeVInt16Field(7, r.x);
+//  groundStation.writeVInt16Field(8, r.y);
+//  groundStation.writeVInt16Field(9, r.z);
+//  groundStation.finishMessage();
 }

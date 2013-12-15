@@ -19,9 +19,7 @@
 
 // IDs os commands
 #define CMD_TEXT 1
-#define CMD_START 'S'
-#define CMD_SENSORS_GYRO 'G'
-#define CMD_SENSORS_ACC 'A'
+#define CMD_SENSORS 'S'
 #define CMD_RECEIVER 'R'
 #define CMD_ANGLES 'E'
 #define CMD_MOTORS 'M'
@@ -29,6 +27,7 @@
 #define CMD_DCM 'D'
 #define CMD_STABILIZATION 'Q'
 #define CMD_OMEGA 'O'
+#define CMD_CONFIGURATION 'C'
 
 
 typedef void (*handlerPtr)(char[]);
@@ -81,7 +80,8 @@ public:
   void writeVUInt16Field(uint32_t id, uint16_t val);
   void writeVInt16Field(uint32_t id, int16_t val);
 
-  void writeVIntsField(uint32_t id, uint32_t vals[], size_t size);
+  void writeVIntsField(uint32_t id, int32_t vals[], size_t size);
+  void writeVUIntsField(uint32_t id, uint32_t vals[], size_t size);
 
   void writeFloatField(uint32_t id, float value);
   void writeFloatsField(uint32_t id, float value[], size_t size);

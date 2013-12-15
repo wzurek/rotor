@@ -45,9 +45,13 @@ PID accelPID(4, 0.01, 0);
 // the values baced on experiments
 Vector3f accelCorrection(-7.8, -16.1, 0);
 
-PID pitchPID(1, 0.0, 0.1);
-PID rolPID(1, 0.0, 0.1);
-PID yawPID(1, 0.0, 0.1);
+PID pitchPID(1, 0.0, 0.5);
+PID rolPID(1, 0.0, 0.5);
+PID yawPID(1, 0.0, 0.5);
+
+// scale of the gyro component for PID
+float gyroScale = 0.4;
+float anglesScale = 0.4;
 
 PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID, &stabilizeRolPID, &stabilizeYawPID, &accelPID };
 
@@ -77,7 +81,8 @@ PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID, &stabilizeRolPI
 //7
 #define REPORT_OMEGA 128
 
-uint32_t REPORTING = REPORT_ANGLES | REPORT_TIME; // REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER;
+uint32_t REPORTING = REPORT_ANGLES | REPORT_TIME | REPORT_MOTORS
+    | REPORT_SENSORS; // REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER; // | REPORT_STABILIZATION | REPORT_RECEIVER
 
 // current time
 uint32_t currentMicros;
@@ -107,9 +112,6 @@ float groundAngles[3];
 
 // target angles
 float targetAngles[3];
-
-// scale of the gyro component for PID
-float gyroScale = 0.2;
 
 // max target angle
 #define MAX_ANGLE (HALF_PI/8)
@@ -167,7 +169,7 @@ void setup() {
   // register ground station commands
 //  groundStation.registerCommand('R', cmdUpdateReporting);
 //  groundStation.registerCommand('M', cmdMotors);
-//  groundStation.registerCommand('P', cmdUpdatePid);
+  groundStation.registerCommand('P', cmdUpdatePid);
 //  groundStation.registerCommand('A', cmdUpdateAccelError);
 //  groundStation.registerCommand('G', cmdUpdateGyroScale);
 
@@ -333,13 +335,18 @@ void perform50HzActions() {
 
   // read sensors
   gyro.read();
-  if (REPORTING & REPORT_SENSORS) {
-    print3vi(CMD_SENSORS_GYRO, gyro.g.x, gyro.g.y, gyro.g.z);
-  }
 
   compass.readAcc();
   if (REPORTING & REPORT_SENSORS) {
-    print3vi(CMD_SENSORS_ACC, compass.a.x, compass.a.y, compass.a.z);
+    groundStation.beginMessage(CMD_SENSORS);
+
+    int32_t gints[] = { gyro.g.x, gyro.g.y, gyro.g.z };
+    groundStation.writeVIntsField(1, gints, 3);
+
+    int32_t aints[] = { compass.a.x, compass.a.y, compass.a.z };
+    groundStation.writeVIntsField(2, aints, 3);
+
+    groundStation.finishMessage();
   }
 
   // update orientation
@@ -347,40 +354,38 @@ void perform50HzActions() {
 
   // update motor
   if (motors.armed) {
-    motors.pitch = pitchPID.computePID(kinematicsAngle[PITCH] + gyroGain.data[PITCH] * gyroScale, targetAngles[PITCH],
-        currentMicros);
-    motors.rol = rolPID.computePID(kinematicsAngle[ROL] + gyroGain.data[ROL] * gyroScale, targetAngles[ROL],
-        currentMicros);
-    motors.yaw = yawPID.computePID(kinematicsAngle[YAW] + gyroGain.data[YAW] * gyroScale, targetAngles[YAW],
-        currentMicros);
+//    motors.pitch = pitchPID.computePID(kinematicsAngle[PITCH] * anglesScale + gyroGain.data[PITCH] * gyroScale,
+//        targetAngles[PITCH], currentMicros);
+//    motors.rol = rolPID.computePID(kinematicsAngle[ROL] * anglesScale + gyroGain.data[ROL] * gyroScale,
+//        targetAngles[ROL], currentMicros);
+//    motors.yaw = yawPID.computePID(kinematicsAngle[YAW] * anglesScale + gyroGain.data[YAW] * gyroScale,
+//        targetAngles[YAW], currentMicros);
+//
+    // based on gyro, targeting gyro gain == 0;
+    motors.pitch = gyroScale * pitchPID.computePID(gyroGain.data[PITCH], 0, currentMicros);
+    motors.rol = gyroScale * rolPID.computePID(gyroGain.data[ROL], 0, currentMicros);
+    motors.yaw = gyroScale * yawPID.computePID(gyroGain.data[YAW], 0, currentMicros);
+
+    // based on location
+    motors.pitch -= (kinematicsAngle[PITCH] - targetAngles[PITCH]) * anglesScale;
+    motors.rol -= (kinematicsAngle[ROL] - targetAngles[ROL]) * anglesScale;
+    motors.yaw -= (kinematicsAngle[YAW] - targetAngles[YAW]) * anglesScale;
 
     if (REPORTING & REPORT_STABILIZATION) {
-//      Serial.print(CMD_BEGIN);
-//      Serial.print(CMD_STABILIZATION);
-//      pitchPID.print();
-//      Serial.print(';');
-//      rolPID.print();
-//      Serial.print(';');
-//      yawPID.print();
-//      Serial.print(';');
-//
-//      printVectorData(gyroGain.data);
-//      Serial.print(';');
-//
-//      Serial.print(motors.pitch, 5);
-//      Serial.print(',');
-//      Serial.print(motors.rol, 5);
-//      Serial.print(',');
-//      Serial.print(motors.yaw, 5);
-//      Serial.print(';');
-//      Serial.print(gyroScale);
-//      Serial.print(';');
-//      Serial.print(targetAngles[PITCH], 5);
-//      Serial.print(',');
-//      Serial.print(targetAngles[ROL], 5);
-//      Serial.print(',');
-//      Serial.print(targetAngles[YAW], 5);
-//      Serial.print(CMD_END);
+
+      groundStation.beginMessage(CMD_STABILIZATION);
+      pitchPID.print(1);
+      rolPID.print(2);
+      yawPID.print(3);
+      groundStation.writeFloatsField(4, gyroGain.data, 3);
+
+      float motorsData[] = { motors.pitch, motors.rol, motors.yaw };
+      groundStation.writeFloatsField(5, motorsData, 3);
+      groundStation.writeFloatsField(6, targetAngles, 3);
+
+      groundStation.writeFloatField(7, gyroScale);
+
+      groundStation.finishMessage();
     }
   }
 
@@ -389,6 +394,16 @@ void perform50HzActions() {
   if (REPORTING & REPORT_MOTORS) {
     motors.print();
   }
+}
+
+void sendConfiguratio() {
+  groundStation.beginMessage(CMD_CONFIGURATION);
+  groundStation.writeFloatField(1, anglesScale);
+  groundStation.writeFloatField(2, gyroScale);
+  groundStation.writeFloatsField(3, gyroGain.data, 3);
+  groundStation.writeVUInt32Field(4, THROTTLE_MAX);
+  groundStation.writeVUInt32Field(5, PITCH_MAX);
+  groundStation.finishMessage();
 }
 
 int sec = 50;

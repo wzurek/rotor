@@ -64,7 +64,7 @@ public:
   float lastTime;
 
   float computePID(float value, float target, float currentTime);
-  void print();
+  void print(uint32_t key);
 };
 
 float PID::computePID(float value, float target, float currentTime) {
@@ -86,18 +86,9 @@ float PID::computePID(float value, float target, float currentTime) {
   return p * error + i * integral + d * derivate;
 }
 
-void PID::print() {
-//  Serial.print(p);
-//  Serial.print(',');
-//  Serial.print(i);
-//  Serial.print(',');
-//  Serial.print(d);
-//  Serial.print(',');
-//  Serial.print(previous_error, 4);
-//  Serial.print(',');
-//  Serial.print(integral);
-//  Serial.print(',');
-//  Serial.print(lastTime, 0);
+void PID::print(uint32_t key) {
+  float values[] = { p, i, d, previous_error, integral, lastTime };
+  groundStation.writeFloatsField(key, values, 6);
 }
 
 PID::PID(float p, float i, float d) {

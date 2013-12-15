@@ -20,8 +20,8 @@
 #define REAR_LEFT 2
 #define REAR_RIGHT 3
 
-#define PITCH_MAX 40
-#define ROL_MAX 40
+#define PITCH_MAX 100
+#define ROL_MAX 100
 #define YAV_MAX 20
 
 #define THROTTLE_MAX 1500

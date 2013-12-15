@@ -54,8 +54,7 @@ void Vector3f::cross(float* b, float* out) {
 }
 
 float Vector3f::dot(Vector3f b) {
-  return data[XAXIS] * b.data[XAXIS] + data[YAXIS] * b.data[YAXIS]
-      + data[ZAXIS] * b.data[ZAXIS];
+  return data[XAXIS] * b.data[XAXIS] + data[YAXIS] * b.data[YAXIS] + data[ZAXIS] * b.data[ZAXIS];
 }
 
 void Vector3f::print() {
@@ -86,9 +85,7 @@ void Vector3f::normalize() {
 }
 
 float Vector3f::length() {
-  return sqrt(
-      data[XAXIS] * data[XAXIS] + data[YAXIS] * data[YAXIS]
-          + data[ZAXIS] * data[ZAXIS]);
+  return sqrt(data[XAXIS] * data[XAXIS] + data[YAXIS] * data[YAXIS] + data[ZAXIS] * data[ZAXIS]);
 }
 
 Matrix3f::Matrix3f() {
@@ -194,5 +191,36 @@ void Matrix3f::fixError() {
 void Vector3f::add(Vector3f* add) {
   for (int i = 0; i < 3; i++) {
     data[i] += add->data[i];
+  }
+}
+
+NormalizedVector3f::NormalizedVector3f() {
+  for (int i = 0; i < NORMALIZED_SIZE * 3; i++) {
+    this->datas[i] = 0;
+  }
+  this->index = 0;
+}
+
+void NormalizedVector3f::set(float x, float y, float z) {
+
+  index += 3;
+  if (index >= 3 * NORMALIZED_SIZE) {
+    index = 0;
+  }
+
+  this->datas[this->index + 0] = x;
+  this->datas[this->index + 1] = y;
+  this->datas[this->index + 2] = z;
+
+  for (int j = 0; j < 3; j++) {
+    data[j] = datas[j];
+  }
+  for (int i = 1; i < NORMALIZED_SIZE; i++) {
+    for (int j = 0; j < 3; j++) {
+      data[j] += datas[i * 3 + j];
+    }
+  }
+  for (int j = 0; j < 3; j++) {
+    data[j] /= NORMALIZED_SIZE;
   }
 }

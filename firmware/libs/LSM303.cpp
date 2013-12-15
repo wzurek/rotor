@@ -65,9 +65,7 @@ void LSM303::init(byte device, byte sa0_a) {
     else if (sa0_a == LSM303_SA0_A_HIGH)
       acc_address = ACC_ADDRESS_SA0_A_HIGH;
     else
-      acc_address =
-          (detectSA0_A() == LSM303_SA0_A_HIGH) ?
-              ACC_ADDRESS_SA0_A_HIGH : ACC_ADDRESS_SA0_A_LOW;
+      acc_address = (detectSA0_A() == LSM303_SA0_A_HIGH) ? ACC_ADDRESS_SA0_A_HIGH : ACC_ADDRESS_SA0_A_LOW;
     break;
 
   case LSM303DLHC_DEVICE:
@@ -83,9 +81,7 @@ void LSM303::init(byte device, byte sa0_a) {
     } else {
       // otherwise, assume DLH or DLM (pulled low by default on Pololu boards); query magnetometer WHO_AM_I to differentiate these two
       acc_address = ACC_ADDRESS_SA0_A_LOW;
-      _device =
-          (readMagReg(LSM303_WHO_AM_I_M) == 0x3C) ?
-              LSM303DLM_DEVICE : LSM303DLH_DEVICE;
+      _device = (readMagReg(LSM303_WHO_AM_I_M) == 0x3C) ? LSM303DLM_DEVICE : LSM303DLH_DEVICE;
     }
   }
 }
@@ -142,24 +138,16 @@ byte LSM303::readMagReg(int reg) {
   if (reg < 0) {
     switch (reg) {
     case LSM303_OUT_Y_H_M:
-      reg =
-          (_device == LSM303DLH_DEVICE) ?
-              LSM303DLH_OUT_Y_H_M : LSM303DLM_OUT_Y_H_M;
+      reg = (_device == LSM303DLH_DEVICE) ? LSM303DLH_OUT_Y_H_M : LSM303DLM_OUT_Y_H_M;
       break;
     case LSM303_OUT_Y_L_M:
-      reg =
-          (_device == LSM303DLH_DEVICE) ?
-              LSM303DLH_OUT_Y_L_M : LSM303DLM_OUT_Y_L_M;
+      reg = (_device == LSM303DLH_DEVICE) ? LSM303DLH_OUT_Y_L_M : LSM303DLM_OUT_Y_L_M;
       break;
     case LSM303_OUT_Z_H_M:
-      reg =
-          (_device == LSM303DLH_DEVICE) ?
-              LSM303DLH_OUT_Z_H_M : LSM303DLM_OUT_Z_H_M;
+      reg = (_device == LSM303DLH_DEVICE) ? LSM303DLH_OUT_Z_H_M : LSM303DLM_OUT_Z_H_M;
       break;
     case LSM303_OUT_Z_L_M:
-      reg =
-          (_device == LSM303DLH_DEVICE) ?
-              LSM303DLH_OUT_Z_L_M : LSM303DLM_OUT_Z_L_M;
+      reg = (_device == LSM303DLH_DEVICE) ? LSM303DLH_OUT_Z_L_M : LSM303DLM_OUT_Z_L_M;
       break;
     }
   }
@@ -193,8 +181,7 @@ void LSM303::readAcc(void) {
   unsigned int millis_start = millis();
   did_timeout = false;
   while (Wire.available() < 6) {
-    if (io_timeout > 0
-        && ((unsigned int) millis() - millis_start) > io_timeout) {
+    if (io_timeout > 0 && ((unsigned int) millis() - millis_start) > io_timeout) {
       did_timeout = true;
       return;
     }
@@ -223,15 +210,43 @@ void LSM303::readAcc(void) {
   a.x = 0;
   a.y = 0;
   a.z = 0;
+
   for (int i = 0; i < bufferSize; i++) {
     a.x += buffer[i].x;
     a.y += buffer[i].y;
     a.z += buffer[i].z;
   }
-  a.x /= bufferSize;
-  a.y /= bufferSize;
-  a.z /= bufferSize;
 
+//  // exclude min and max
+//  int16_t minx, maxx, miny, maxy, minz, maxz;
+//  minx = maxx = buffer[0].x;
+//  miny = maxy = buffer[0].y;
+//  minz = maxz = buffer[0].z;
+//  for (int i = 1; i < bufferSize; i++) {
+//    if (buffer[i].x < minx) {
+//      minx = buffer[i].x;
+//    } else if (buffer[i].x > maxx) {
+//      maxx = buffer[i].x;
+//    }
+//    if (buffer[i].y < miny) {
+//      miny = buffer[i].y;
+//    } else if (buffer[i].y > maxy) {
+//      maxy = buffer[i].y;
+//    }
+//    if (buffer[i].z < minz) {
+//      minz = buffer[i].z;
+//    } else if (buffer[i].z > maxz) {
+//      maxz = buffer[i].z;
+//    }
+//  }
+//  a.x -= minx + maxx;
+//  a.y -= miny + maxy;
+//  a.z -= minz + maxz;
+
+  // take average of the rest
+  a.x /= (bufferSize );
+  a.y /= (bufferSize );
+  a.z /= (bufferSize );
 
 //  a.x -= accel_base.data[XAXIS];
 //  a.y -= accel_base.data[YAXIS];
@@ -249,8 +264,7 @@ void LSM303::readMag(void) {
   unsigned int millis_start = millis();
   did_timeout = false;
   while (Wire.available() < 6) {
-    if (io_timeout > 0
-        && ((unsigned int) millis() - millis_start) > io_timeout) {
+    if (io_timeout > 0 && ((unsigned int) millis() - millis_start) > io_timeout) {
       did_timeout = true;
       return;
     }
@@ -324,8 +338,7 @@ int LSM303::heading(vector from) {
   vector_cross(&temp_a, &E, &N);
 
   // compute heading
-  int heading =
-      round(atan2(vector_dot(&E, &from), vector_dot(&N, &from)) * 180 / M_PI);
+  int heading = round(atan2(vector_dot(&E, &from), vector_dot(&N, &from)) * 180 / M_PI);
   if (heading < 0)
     heading += 360;
   return heading;

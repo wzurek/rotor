@@ -72,14 +72,11 @@ void Motors::updateMotors() {
     float r = constrain(rol, -1,1);
     float y = constrain(yaw, -1,1);
 
-    motor_throttle[FRONT_LEFT] = base_throttle - (p * PITCH_MAX)
-        + (r * ROL_MAX);
+    motor_throttle[FRONT_LEFT] = base_throttle - (p * PITCH_MAX) + (r * ROL_MAX);
 
-    motor_throttle[FRONT_RIGHT] = base_throttle - (p * PITCH_MAX)
-        - (r * ROL_MAX);
+    motor_throttle[FRONT_RIGHT] = base_throttle - (p * PITCH_MAX) - (r * ROL_MAX);
 
-    motor_throttle[REAR_RIGHT] = base_throttle + (p * PITCH_MAX)
-        - (r * ROL_MAX);
+    motor_throttle[REAR_RIGHT] = base_throttle + (p * PITCH_MAX) - (r * ROL_MAX);
 
     motor_throttle[REAR_LEFT] = base_throttle + (p * PITCH_MAX) + (r * ROL_MAX);
 
@@ -101,11 +98,9 @@ void Motors::updateMotors() {
 void Motors::print() {
 
   groundStation.beginMessage(CMD_MOTORS); // motors M
-  groundStation.writeVIntsField(1,motor_throttle,MOTOR_MAX);
-  groundStation.writeFloatField(2, throttle);
-  groundStation.writeFloatField(3, pitch);
-  groundStation.writeFloatField(4, rol);
-  groundStation.writeFloatField(5, yaw);
+  groundStation.writeVUIntsField(1, motor_throttle, MOTOR_MAX);
+  float data[] = { throttle, pitch, rol, yaw };
+  groundStation.writeFloatsField(2, data, 4);
   groundStation.finishMessage();
 }
 

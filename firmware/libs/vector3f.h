@@ -62,4 +62,18 @@ public:
   void fixError();
 };
 
+#define NORMALIZED_SIZE 3
+
+class NormalizedVector3f : public Vector3f {
+
+  float datas[NORMALIZED_SIZE*3];
+  uint32_t index;
+
+public:
+
+  NormalizedVector3f();
+  void set(float x, float y, float z);
+
+};
+
 #endif /* VECTOR3F_H_ */

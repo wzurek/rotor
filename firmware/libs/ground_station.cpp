@@ -18,6 +18,7 @@ GroundStationComm::GroundStationComm() {
   cmd_index = 0;
   cmd = CMD_BEGIN;
   cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
+  sentBytes = 0;
   handlersCount = 0;
 }
 
@@ -235,7 +236,20 @@ void GroundStationComm::writeFloatsField(uint32_t id, float values[], size_t siz
   }
 }
 
-void GroundStationComm::writeVIntsField(uint32_t id, uint32_t vals[], size_t size) {
+void GroundStationComm::writeVUIntsField(uint32_t id, uint32_t vals[], size_t size) {
+  uint8_t buff[size * 5];
+  uint8_t *b = buff;
+  for (int i = 0; i < size; i++) {
+    b += appendVuint32(vals[i], b);
+  }
+  uint32_t buff_size = b - buff;
+
+  beginField(id, FIELD_FIXED_LEN);
+  writeVUInt32(buff_size);
+  writeBytes(buff, buff_size);
+}
+
+void GroundStationComm::writeVIntsField(uint32_t id, int32_t vals[], size_t size) {
   uint8_t buff[size * 5];
   uint8_t *b = buff;
   for (int i = 0; i < size; i++) {

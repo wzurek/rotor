@@ -13,6 +13,7 @@
 //
 #include "receiver.h"
 #include "global_objects.h"
+#include <itoa.h>
 
 // channel to pin mapping
 uint32_t Receiver::pins[MAX_CHANNEL];
@@ -64,9 +65,8 @@ void Receiver::interruptHandler(uint32_t channel) {
   }
 }
 
-Receiver::Receiver(uint32_t pin1, uint32_t pin2, uint32_t pin3, uint32_t pin4,
-    uint32_t pin5, uint32_t pin6, uint32_t pin7, uint32_t pin8, uint32_t pin9,
-    uint32_t pin10) {
+Receiver::Receiver(uint32_t pin1, uint32_t pin2, uint32_t pin3, uint32_t pin4, uint32_t pin5, uint32_t pin6,
+    uint32_t pin7, uint32_t pin8, uint32_t pin9, uint32_t pin10) {
   Receiver::pins[0] = pin1;
   Receiver::pins[1] = pin2;
   Receiver::pins[2] = pin3;
@@ -137,6 +137,6 @@ void Receiver::readAll(uint32_t toReturn[MAX_CHANNEL]) {
 
 void Receiver::print() {
   groundStation.beginMessage(CMD_RECEIVER); // message R
-  groundStation.writeVIntsField(1, locValues, MAX_CHANNEL);
+  groundStation.writeVUIntsField(1, locValues, MAX_CHANNEL);
   groundStation.finishMessage();
 }
