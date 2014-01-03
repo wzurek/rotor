@@ -9,14 +9,13 @@
 
 #define CMD_WAIT_FOR_CMD_BEGIN 0
 #define CMD_WAIT_FOR_CMD_END 1
-
-#define CMD_BEGIN '!'
-#define CMD_END '|'
+#define CMD_WAIT_FOR_CMD_SIZE 2
 
 GroundStationComm::GroundStationComm() {
   buff_index = 0;
   cmd_index = 0;
-  cmd = CMD_BEGIN;
+  cmd = 0;
+  cmd_size = 0;
   cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
   sentBytes = 0;
   handlersCount = 0;
@@ -24,18 +23,37 @@ GroundStationComm::GroundStationComm() {
 
 void GroundStationComm::invokeCommand() {
 
+  char msg[3];
+  msg[0] = '-';
+  msg[1] = cmd;
+  msg[2] = 0;
+  textMessage(msg);
+
   for (int i = 0; i < handlersCount; i++) {
     if (handlers[i].cmd == cmd) {
-      handlers[i].action(cmdArg + 1);
+      handlers[i].action(cmdArg, cmd_size);
       return;
     }
   }
+  char buff[handlersCount + 1];
+  for (int i = 0; i < handlersCount; i++) {
+    buff[i] = handlers[i].cmd;
+  }
+  buff[handlersCount-1] = 0;
+  textMessage("Unknown message. Known messages:");
+  textMessage(buff);
 }
 
 void GroundStationComm::processCmds() {
 
-  if (Serial.available()) {
-    size_t size = Serial.readBytes(cmd_buff, CMD_BUFF_MAX);
+  size_t available = Serial.available();
+  if (available > 0) {
+
+    if (available > CMD_BUFF_MAX) {
+      available = CMD_BUFF_MAX;
+    }
+
+    size_t size = Serial.readBytes((char*)cmd_buff, available);
     buff_index = 0;
 
     while (buff_index < size) {
@@ -44,35 +62,28 @@ void GroundStationComm::processCmds() {
       switch (cmd_read_state) {
 
       case CMD_WAIT_FOR_CMD_BEGIN:
-        if (c == CMD_BEGIN) {
+        cmd = c;
+        cmd_read_state = CMD_WAIT_FOR_CMD_SIZE;
+        break;
+
+      case CMD_WAIT_FOR_CMD_SIZE:
+        cmd_size = c;
+        cmd_index = 0;
+        if (cmd_size > 0) {
           cmd_read_state = CMD_WAIT_FOR_CMD_END;
-          cmd_index = 0;
-          cmdArg[0] = 0;
-          cmd = ' ';
+        } else {
+          cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
+          invokeCommand();
         }
         break;
 
       case CMD_WAIT_FOR_CMD_END:
-        if (cmd_index == 0) {
-          cmd = c;
-          cmdArg[cmd_index++] = c;
-        } else if (cmd_index >= CMD_BUFF_MAX) {
+        cmdArg[cmd_index++] = c;
+
+        if (cmd_index >= cmd_size) {
+          cmdArg[cmd_index] = 0;
           cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
-          cmd = CMD_BEGIN;
-          cmd_index = 0;
-          cmdArg[0] = 0;
-          break;
-        } else {
-          if (c == CMD_END) {
-            cmdArg[cmd_index] = 0;
-            invokeCommand();
-            cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
-            cmd = CMD_BEGIN;
-            cmd_index = 0;
-            cmdArg[0] = 0;
-          } else {
-            cmdArg[cmd_index++] = c;
-          }
+          invokeCommand();
         }
         break;
 
@@ -90,8 +101,33 @@ void GroundStationComm::processCmds() {
 // global object
 GroundStationComm groundStation;
 
+size_t GroundStationComm::parseVUint32(const uint8_t* buff, size_t size, uint32_t* vint) {
+  if (buff[0] & 0x80) {
+    *vint = buff[0] & 0x7f;
+    if (buff[1] & 0x80) {
+      *vint |= (buff[1] & 0x7f) << 7;
+      if (buff[2] & 0x80) {
+        *vint |= (buff[2] & 0x7f) << 14;
+        if (buff[3] & 0x80) {
+          *vint |= (buff[3] & 0x7f) << 21;
+          *vint |= (buff[4] & 0x7f) << 28;
+          return 5;
+        }
+        *vint |= buff[3] << 21;
+        return 4;
+      }
+      *vint |= buff[2] << 14;
+      return 3;
+    }
+    *vint |= buff[1] << 7;
+    return 2;
+  }
+  *vint = buff[0];
+  return 1;
+}
+
 // communication
-uint32_t GroundStationComm::appendVuint32(uint32_t val, uint8_t *buff) {
+size_t GroundStationComm::appendVuint32(uint32_t val, uint8_t *buff) {
   buff[0] = static_cast<uint8_t>(val | 0x80);
   if (val >= (1 << 7)) {
     buff[1] = static_cast<uint8_t>((val >> 7) | 0x80);
@@ -121,7 +157,7 @@ uint32_t GroundStationComm::appendVuint32(uint32_t val, uint8_t *buff) {
 }
 
 // communication
-uint32_t GroundStationComm::appendVuint16(uint16_t val, uint8_t *buff) {
+size_t GroundStationComm::appendVuint16(uint16_t val, uint8_t *buff) {
   buff[0] = static_cast<uint8_t>(val | 0x80);
   if (val >= (1 << 7)) {
     buff[1] = static_cast<uint8_t>((val >> 7) | 0x80);
@@ -138,11 +174,11 @@ uint32_t GroundStationComm::appendVuint16(uint16_t val, uint8_t *buff) {
   }
 }
 
-uint32_t GroundStationComm::appendVint32(int32_t val, uint8_t *buff) {
+size_t GroundStationComm::appendVint32(int32_t val, uint8_t *buff) {
   return appendVuint32(static_cast<uint32_t>((val << 1) ^ (val >> 31)), buff);
 }
 
-uint32_t GroundStationComm::appendVint16(int16_t val, uint8_t *buff) {
+size_t GroundStationComm::appendVint16(int16_t val, uint8_t *buff) {
   return appendVuint16(static_cast<uint16_t>((val << 1) ^ (val >> 15)), buff);
 }
 
@@ -212,12 +248,17 @@ void GroundStationComm::writeBytes(uint8_t* buff, size_t size) {
 void GroundStationComm::finishMessage() {
   // this is in fact, end of the message.
   beginField(0, FIELD_END);
+  Serial.flush();
 }
 
 void GroundStationComm::textMessage(const char* text) {
+  size_t size = strlen(text);
+  textMessage(text, size);
+}
+
+void GroundStationComm::textMessage(const char* text, size_t size) {
   beginMessage(CMD_TEXT);
   beginField(1, FIELD_FIXED_LEN);
-  size_t size = strlen(text);
   writeVUInt32((uint32_t) size);
   writeBytes((uint8_t*) text, size);
   finishMessage();
@@ -281,3 +322,4 @@ void GroundStationComm::writeVInt16Field(uint32_t id, int16_t val) {
   beginField(id, FIELD_VINT);
   writeVInt16(val);
 }
+

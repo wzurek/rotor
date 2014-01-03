@@ -1,100 +1,56 @@
 #include "global_objects.h"
 
-void cmdUpdateReporting(char* arg) {
-  REPORTING = 0;
-  int i = 0;
-
-  while (*arg) {
-    REPORTING <<= 1;
-    if (*arg != '0') {
-      REPORTING |= 1;
-    }
-    arg++;
-  }
-
-//  Serial.print("!C");
-//  Serial.print(REPORTING);
-//  Serial.print("|");
+void cmdUpdateReporting(const uint8_t* arg, size_t size) {
+  uint32_t flags;
+  groundStation.parseVUint32(arg, size, &flags);
+  REPORTING = flags;
 }
 
-void cmdMotors(char* arg) {
+void cmdMotors(const uint8_t* arg, size_t size) {
+
   switch (*arg) {
-  case 'D': // dis-arm
-    motors.disarm();
+  case 'S': // stop the motors
+    motors.stop();
     break;
-  case 'A': // arm
+  case 'O': // normal operation
+    motors.operation();
+    break;
+  case 'D': { // directly set the speed of motors
+    motors.direct();
+    size_t shift = 0;
+
+    shift  = groundStation.parseVUint32(arg + 1        , size - 1        , motors.motor_throttle    );
+    shift += groundStation.parseVUint32(arg + 1 + shift, size - 1 - shift, motors.motor_throttle + 1);
+    shift += groundStation.parseVUint32(arg + 1 + shift, size - 1 - shift, motors.motor_throttle + 2);
+             groundStation.parseVUint32(arg + 1 + shift, size - 1 - shift, motors.motor_throttle + 3);
+
+    char buff[100];
+    snprintf(buff, 100, "Set direct motor: FL(%d) FR(%d) RL(%d) RR(%d)",
+         motors.motor_throttle[FRONT_LEFT],
+         motors.motor_throttle[FRONT_RIGHT],
+         motors.motor_throttle[REAR_LEFT],
+         motors.motor_throttle[REAR_RIGHT]);
+
+    groundStation.textMessage(buff);
+    break;
+  }
+  case 'A': // init/arm motor controllers
+    motors.init();
     motors.arm();
+    motors.direct();
     break;
+  default:
+    groundStation.textMessage("Unknown motors command.");
   }
 }
 
-void cmdUpdateAccelError(char* arg) {
-  float x = strtof(arg, &arg);
-  if (*arg != ',')
-    return;
-  arg++;
-
-  float y = strtof(arg, &arg);
-  if (*arg != ',')
-    return;
-  arg++;
-
-  float z = strtof(arg, &arg);
-
-  accelCorrection.data[XAXIS] = x;
-  accelCorrection.data[YAXIS] = y;
-  accelCorrection.data[ZAXIS] = z;
+void cmdUpdateGyroScale(const uint8_t* arg, size_t size) {
 }
 
-void cmdUpdateGyroScale(char* arg) {
-  gyroScale = strtof(arg, &arg);
+void cmdUpdatePid(const uint8_t* arg, size_t size) {
 }
 
-void cmdUpdatePid(char* arg) {
-  int index = *arg - '0';
-  if (index < 0 || index > 6) {
-//    Serial.print("!Cinvalid PID: ");
-//    Serial.print(index);
-//    Serial.print(CMD_END);
-    return;
-  }
-  arg++;
-
-  char* end;
-  float p, i, d;
-  bool reset;
-
-  p = strtof(arg, &end);
-  if (*end != ',')
-    return;
-
-  i = strtof(++end, &end);
-  if (*end != ',')
-    return;
-
-  d = strtof(++end, &end);
-  if (*end != ',')
-    return;
-
-  reset = strtol(end, NULL, 10);
-
-  PID* pid = pids[index];
-  if (reset) {
-    pid->integral = 0;
-  }
-  pid->p = p;
-  pid->i = i;
-  pid->d = d;
-
-//  Serial.print("!Cupdated PID ");
-//  Serial.print(index);
-//  Serial.print(':');
-//  Serial.print(p);
-//  Serial.print(',');
-//  Serial.print(i);
-//  Serial.print(',');
-//  Serial.print(d);
-//  Serial.print(',');
-//  Serial.print(reset);
-//  Serial.print('|');
+void cmdEcho(const uint8_t* arg, size_t size) {
+  // send back the text
+  groundStation.textMessage((char*) arg, size);
 }

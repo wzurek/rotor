@@ -20,39 +20,80 @@
 #define REAR_LEFT 2
 #define REAR_RIGHT 3
 
-#define PITCH_MAX 100
-#define ROL_MAX 100
+#define PITCH_MAX 50
+#define ROL_MAX 50
 #define YAV_MAX 20
 
 #define THROTTLE_MAX 1500
 
+#define MOTOR_MODE_SAFE_START 0
+#define MOTOR_MODE_OFF 1
+#define MOTOR_MODE_STOPPED 2
+#define MOTOR_MODE_OPERATION 3
+#define MOTOR_MODE_DIRECT_COMMAND 4
 
 class Motors {
+private:
+  // mode of operation
+  uint32_t motor_mode;
+
+  // use each motor as servo
+  Servo motor[MOTOR_MAX];
+
+  void updateThrottleForOperationMode();
+
 public:
   Motors();
 
-  // desired pitch, rol, yaw and throttle
+  // desired pitch, rol, yaw and throttle, only relevant in operation mode
   float pitch;
   float rol;
   float yaw;
   float throttle;
 
-  // true, which is equal to '!armed' until set to false
-  bool failSafeStart;
+  // motor mode, see MOTOR_MODE_* constants.
+  inline uint32_t get_mode() {
+    return motor_mode;
+  }
+
+  // move to operation mode;
+  inline void operation() {
+    if (motor_mode <= MOTOR_MODE_OFF) {
+      return;
+    }
+    motor_mode = MOTOR_MODE_OPERATION;
+  }
+
+  // move to operation direct;
+  void direct();
+
+  // stop the motors
+  inline void stop() {
+    if (motor_mode <= MOTOR_MODE_OFF) {
+      return;
+    }
+    motor_mode = MOTOR_MODE_STOPPED;
+  }
+
+  // move the motor from SAFE_START to OFF, or no-op
+  void init();
 
   // true, if the motors are armed
-  bool armed;
+  inline bool isArmed() {
+    return motor_mode > MOTOR_MODE_OFF;
+  };
 
-  // use each motor as servo
-  Servo motor[MOTOR_MAX];
 
-  // speed of each motor
+  // speed of each motor, can be set externally only in direct mode
   uint32_t motor_throttle[MOTOR_MAX];
 
+  // send the motors status to ground station
   void print();
 
+  // arm the motors
   void arm();
-  void disarm();
+
+  // update the motors with the commands
   void updateMotors();
 
 };

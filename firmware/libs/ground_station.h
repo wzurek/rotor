@@ -17,9 +17,12 @@
 #define FIELD_32BIT 5
 #define FIELD_END 7
 
+#define MAX_HANDLERS 10
+
 // IDs os commands
-#define CMD_TEXT 1
+#define CMD_TEXT 'P'
 #define CMD_SENSORS 'S'
+#define CMD_SENSORS_GYRO_ALL 'G'
 #define CMD_RECEIVER 'R'
 #define CMD_ANGLES 'E'
 #define CMD_MOTORS 'M'
@@ -30,7 +33,7 @@
 #define CMD_CONFIGURATION 'C'
 
 
-typedef void (*handlerPtr)(char[]);
+typedef void (*handlerPtr)(const uint8_t*, size_t size);
 
 struct Handler {
   char cmd;
@@ -39,41 +42,63 @@ struct Handler {
 
 class GroundStationComm {
 
-  char cmd_buff[CMD_BUFF_MAX];
-  char cmdArg[CMD_BUFF_MAX];
+  uint8_t cmd_buff[CMD_BUFF_MAX];
+  uint8_t cmdArg[CMD_BUFF_MAX];
   char cmd;
 
   uint32_t buff_index;
   uint32_t cmd_index;
+  uint32_t cmd_size;
   uint32_t cmd_read_state;
 
   uint32_t sentBytes;
 
   uint32_t handlersCount;
-  Handler handlers[10];
+  Handler handlers[MAX_HANDLERS];
 
   void invokeCommand();
 
 
 public:
-  uint32_t appendVuint32(uint32_t val, uint8_t *buff);
-  uint32_t appendVint32(int32_t val, uint8_t *buff);
-  uint32_t appendVuint16(uint16_t val, uint8_t *buff);
-  uint32_t appendVint16(int16_t val, uint8_t *buff);
-
-
+  /**
+   * The constructor.
+   */
   GroundStationComm();
 
-  void processCmds();
-
+  /**
+   * Register handler for gice command type
+   */
   void registerCommand(char cmd, handlerPtr handler);
 
-  // messages
+  /**
+   * Parse VUint from the buffer, returns size of the parsed VInt
+   */
+  size_t parseVUint32(const uint8_t* buff, size_t size, uint32_t* vint_result);
 
+  // for constructing messages
+  size_t appendVuint32(uint32_t val, uint8_t *buff);
+  size_t appendVint32(int32_t val, uint8_t *buff);
+  size_t appendVuint16(uint16_t val, uint8_t *buff);
+  size_t appendVint16(int16_t val, uint8_t *buff);
+
+  /**
+   * Check if there are any commands from GroundSatation
+   */
+  void processCmds();
+
+  /**
+   * Send text message to ground station.
+   */
   void textMessage(const char* text);
+  void textMessage(const char* text, size_t size);
 
+  /**
+   * Begins the message with given ID
+   */
   void beginMessage(uint32_t messageId);
+  void finishMessage();
 
+  // Write fields of given types.
   void writeVUInt32Field(uint32_t id, uint32_t val);
   void writeVInt32Field(uint32_t id, int32_t val);
 
@@ -87,8 +112,10 @@ public:
   void writeFloatsField(uint32_t id, float value[], size_t size);
   void writeFixedField(uint32_t id, uint32_t size, uint8_t *buff);
 
+  // ------ writing lower level stuff
   void beginField(uint32_t id, uint8_t type);
 
+  // ------ writing bytes
   void writeVUInt16(uint16_t val);
   void writeVUInt32(uint32_t val);
 
@@ -98,8 +125,9 @@ public:
   void writeFloat(float val);
   void writeBytes(uint8_t *buff, size_t size);
 
-  void finishMessage();
-
+  /**
+   * How many bytes has been sent since last 'bytesSent()' call.
+   */
   uint32_t bytesSent();
 };
 
