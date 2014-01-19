@@ -57,6 +57,8 @@ extern Vector3f accelCorrection;
 
 extern float gyroScale;
 
+extern int32_t mixin_type;
+
 extern GroundStationComm groundStation;
 
 

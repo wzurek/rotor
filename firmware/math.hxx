@@ -87,8 +87,8 @@ float PID::computePID(float value, float target, float currentTime) {
 }
 
 void PID::print(uint32_t key) {
-  float values[] = { p, i, d, previous_error, integral, lastTime };
-  groundStation.writeFloatsField(key, values, 6);
+  float values[] = { p, i, d}; //, previous_error, integral, lastTime };
+  groundStation.writeFloatsField(key, values, 3);
 }
 
 PID::PID(float p, float i, float d) {

@@ -129,8 +129,10 @@ void Motors::print() {
 
   groundStation.beginMessage(CMD_MOTORS); // motors M
   groundStation.writeVUIntsField(1, motor_throttle, MOTOR_MAX);
-  float data[] = { throttle, pitch, rol, yaw };
-  groundStation.writeFloatsField(2, data, 4);
+
+  // return ints 0-100
+  int32_t data[] = { throttle * 100.0, pitch * 100.0, rol * 100.0, yaw * 100.0 };
+  groundStation.writeVIntsField(2, data, 4);
   groundStation.writeVUInt32Field(3, motor_mode);
   groundStation.finishMessage();
 }

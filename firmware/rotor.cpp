@@ -42,7 +42,7 @@ L3G gyro;
 LSM303 compass;
 Motors motors;
 
-PID accelPID(4, 0.01, 0);
+PID accelPID(0.35f, 0.0f, 0.0f);
 
 // the values based on experiments
 Vector3f accelCorrection(-7.8, -16.1, 0);
@@ -54,6 +54,13 @@ PID yawPID(1, 0.0, 0.5);
 // scale of the gyro component for PID
 float gyroScale = 0.4;
 float anglesScale = 0.4;
+
+// values for the mixin alghorithm type
+#define MIXIN_TYPE_ORIENTATION 1
+#define MIXIN_TYPE_ORIENTATION_GYRO 2
+#define MIXIN_TYPE_GYRO 3
+
+int32_t mixin_type = 1;
 
 PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID, &stabilizeRolPID, &stabilizeYawPID, &accelPID };
 
@@ -83,7 +90,7 @@ PID *pids[] = { &pitchPID, &rolPID, &yawPID, &stabilizePitchPID, &stabilizeRolPI
 //7
 #define REPORT_OMEGA 128
 
-uint32_t REPORTING = REPORT_ANGLES | REPORT_TIME | REPORT_MOTORS | REPORT_SENSORS; // REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER; // | REPORT_STABILIZATION | REPORT_RECEIVER
+uint32_t REPORTING = REPORT_ANGLES | REPORT_TIME | REPORT_MOTORS | REPORT_SENSORS | REPORT_OMEGA; // REPORT_RECEIVER; //|REPORT_SENSORS;// | REPORT_RECEIVER; // | REPORT_STABILIZATION | REPORT_RECEIVER
 
 // current time
 uint32_t currentMicros;
@@ -153,14 +160,246 @@ void cmdSendConfiguration(const uint8_t* arg, size_t size) {
   groundStation.finishMessage();
 }
 
+#define TYPE_INT 1
+#define TYPE_FLOAT 2
+#define TYPE_PID 3
+#define TYPE_SEPARATOR 4
+#define TYPE_XYZ_FLOAT 5
+#define TYPE_XYZ_INT 6
+#define TYPE_32BIT 7
+
+#define CONF_ID_GS_REPORTING 5
+
+#define CONF_ID_MIXIN_GROUP 9
+#define CONF_ID_MIXIN_TYPE 10
+#define CONF_ID_MIXIN_ORIENTATION_SCALE 11
+#define CONF_ID_MIXIN_GYRO_SCALE 12
+#define CONF_ID_MIXIN_PID 13
+#define CONF_ID_MIXIN_SPREAD 14
+
+#define CONF_ID_RECEIVER_GROUP 19
+#define CONF_ID_THROTTLE_MAX 20
+
+#define CONF_ID_ORIENTATION_GROUP 29
+#define CONF_ID_ACCEL_PID 30
+#define CONF_ID_ACCEL_CORRECTION 31
+#define CONF_ID_GYRO_CORRECTION 33
+
+void writeConfLineDesc(uint32_t fieldId, uint8_t type, const char* desc) {
+  char buff[100];
+  buff[0] = type;
+  size_t len = strlen(desc);
+
+  strcpy(buff + 1, desc);
+  groundStation.writeFixedField(fieldId, len + 1, (uint8_t*) buff);
+}
+
+void cmdSendConfigurationListDesc() {
+  groundStation.beginMessage(CMD_CONFIGURATION_LIST);
+
+  // write the model name and version on first field
+  groundStation.writeFixedField(1, strlen(MODEL_VERSION), (uint8_t*) MODEL_VERSION);
+  groundStation.writeVUInt32Field(2, 0);
+
+  writeConfLineDesc(CONF_ID_GS_REPORTING, TYPE_32BIT,
+      "Reporting|Sensors|Receiver|Orientation|Motors|Time|DCM|Stabilization|Omega");
+
+  writeConfLineDesc(CONF_ID_MIXIN_GROUP, TYPE_SEPARATOR, "Mixing orientation to motors");
+  writeConfLineDesc(CONF_ID_MIXIN_TYPE, TYPE_INT, "Mixin type|1:Orientation only|2:Orientation and Gyro|3:Gyro only");
+  writeConfLineDesc(CONF_ID_MIXIN_ORIENTATION_SCALE, TYPE_FLOAT, "Mixin orientation scale");
+  writeConfLineDesc(CONF_ID_MIXIN_GYRO_SCALE, TYPE_FLOAT, "Mixin gyro scale");
+  writeConfLineDesc(CONF_ID_MIXIN_PID, TYPE_PID, "Mixin PID");
+  writeConfLineDesc(CONF_ID_MIXIN_SPREAD, TYPE_INT, "Mixin spead spread MAX");
+
+  writeConfLineDesc(CONF_ID_RECEIVER_GROUP, TYPE_SEPARATOR, "Receiver settings");
+  writeConfLineDesc(CONF_ID_THROTTLE_MAX, TYPE_INT, "Throttle MAX");
+
+  writeConfLineDesc(CONF_ID_ORIENTATION_GROUP, TYPE_SEPARATOR, "Orientation parameters");
+  writeConfLineDesc(CONF_ID_ACCEL_PID, TYPE_PID, "Accel PID");
+  writeConfLineDesc(CONF_ID_ACCEL_CORRECTION, TYPE_XYZ_FLOAT, "Accel base");
+  writeConfLineDesc(CONF_ID_GYRO_CORRECTION, TYPE_XYZ_INT, "Gyro base");
+
+  groundStation.finishMessage();
+}
+
+void cmdSendConfigurationListValues() {
+  groundStation.beginMessage(CMD_CONFIGURATION_LIST);
+
+  // write the model name and version on first field
+  groundStation.writeFixedField(1, strlen(MODEL_VERSION), (uint8_t*) MODEL_VERSION);
+  groundStation.writeVUInt32Field(2, 1);
+
+  groundStation.writeVInt32Field(CONF_ID_GS_REPORTING, REPORTING);
+
+  groundStation.writeVInt32Field(CONF_ID_MIXIN_TYPE, mixin_type);
+  groundStation.writeFloatField(CONF_ID_MIXIN_ORIENTATION_SCALE, anglesScale);
+  groundStation.writeFloatField(CONF_ID_MIXIN_GYRO_SCALE, gyroScale);
+  pitchPID.print(CONF_ID_MIXIN_PID);
+  groundStation.writeVUInt32Field(CONF_ID_MIXIN_SPREAD, PITCH_MAX);
+
+  groundStation.writeVUInt32Field(CONF_ID_THROTTLE_MAX, THROTTLE_MAX);
+
+  accelPID.print(CONF_ID_ACCEL_PID);
+  groundStation.writeFloatsField(CONF_ID_ACCEL_CORRECTION, accelCorrection.data, 3);
+
+  int32_t gyro_base[] = { gyro.base.x, gyro.base.y, gyro.base.z };
+  groundStation.writeVIntsField(CONF_ID_GYRO_CORRECTION, gyro_base, 3);
+
+  groundStation.finishMessage();
+}
+
+void cmdSetConfigurationListValues(const uint8_t* arg, size_t size) {
+
+  size_t data_size = size - 1;
+  uint32_t fieldId = arg[0];
+  const uint8_t* data = arg + 1;
+  bool correct = false;
+
+  switch (fieldId) {
+  case CONF_ID_MIXIN_TYPE: {
+    if (data_size > 0 && data_size <= 5) {
+
+      int32_t type;
+      size_t len = groundStation.parseVSint32(data, data_size, &type);
+      if (data_size == len) {
+        mixin_type = type;
+        correct = true;
+      }
+
+    }
+    break;
+  }
+  case CONF_ID_GS_REPORTING: {
+    if (data_size > 0 && data_size <= 5) {
+      int32_t reporting;
+      size_t len = groundStation.parseVSint32(data, data_size, &reporting);
+      if (data_size == len) {
+        REPORTING = reporting;
+        correct = true;
+      }
+
+    }
+    break;
+  }
+  case CONF_ID_MIXIN_ORIENTATION_SCALE: {
+    if (data_size == 4) {
+      correct = true;
+      anglesScale = *((float*) data);
+    }
+    break;
+  }
+  case CONF_ID_MIXIN_GYRO_SCALE: {
+    if (data_size == 4) {
+      correct = true;
+      gyroScale = *((float*) data);
+    }
+    break;
+  }
+  case CONF_ID_MIXIN_PID: {
+    if (data_size == 12) {
+      correct = true;
+      const float* pid = (const float*) data;
+
+      pitchPID.p = pid[0];
+      pitchPID.i = pid[1];
+      pitchPID.d = pid[2];
+
+      rolPID.p = pid[0];
+      rolPID.i = pid[1];
+      rolPID.d = pid[2];
+
+      yawPID.p = pid[0];
+      yawPID.i = pid[1];
+      yawPID.d = pid[2];
+    }
+    break;
+  }
+  case CONF_ID_MIXIN_SPREAD: {
+    if (data_size > 0 && data_size <= 5) {
+      correct = true;
+    }
+    break;
+  }
+  case CONF_ID_THROTTLE_MAX: {
+    if (data_size > 0 && data_size <= 5) {
+      correct = true;
+    }
+    break;
+  }
+  case CONF_ID_ACCEL_PID: {
+    if (data_size == 12) {
+      correct = true;
+      const float* pid = (const float*) data;
+
+      accelPID.p = pid[0];
+      accelPID.i = pid[1];
+      accelPID.d = pid[2];
+    }
+    break;
+  }
+  case CONF_ID_ACCEL_CORRECTION: {
+    if (data_size == 12) {
+      correct = true;
+      const float* pid = (const float*) data;
+
+      accelCorrection.data[0] = pid[0];
+      accelCorrection.data[1] = pid[1];
+      accelCorrection.data[2] = pid[2];
+    }
+    break;
+  }
+  case CONF_ID_GYRO_CORRECTION: {
+    if (data_size > 0 && data_size < 15) {
+      int32_t x, y, z;
+      size_t len;
+
+      len = groundStation.parseVSint32(data, data_size, &x);
+      len += groundStation.parseVSint32(data + len, data_size - len, &y);
+      len += groundStation.parseVSint32(data + len, data_size - len, &z);
+
+      if (len == data_size) {
+        correct = true;
+        gyro.base.x = x;
+        gyro.base.y = y;
+        gyro.base.z = z;
+      }
+    }
+    break;
+  }
+  }
+  if (!correct) {
+    char buff[100];
+    sprintf(buff, "Unknown set field %d, size %d.", fieldId, size);
+    groundStation.textMessage(buff);
+  } else {
+//    sprintf(buff, "Conf: %d (%d)", fieldId, size);
+  }
+}
+
+void cmdSendConfigurationList(const uint8_t* arg, size_t size) {
+  switch (*arg) {
+  case 'D': // send descriptions
+    cmdSendConfigurationListDesc();
+    break;
+  case 'V': // send values
+    cmdSendConfigurationListValues();
+    break;
+  case 'S': // send values
+    cmdSetConfigurationListValues(arg + 1, size - 1);
+    break;
+  default:
+    groundStation.textMessage("Unknown configuration command.");
+  }
+}
+
 void cmdSetConfiguration(const uint8_t* arg, size_t size) {
 
   if (size == 20) {
-    anglesScale = *(float*)arg;
-    gyroScale = *(float*)(arg + 4);
-    pitchPID.p = *(float*)(arg + 8);
-    pitchPID.i = *(float*)(arg + 12);
-    pitchPID.d = *(float*)(arg + 16);
+    anglesScale = *(float*) arg;
+    gyroScale = *(float*) (arg + 4);
+    pitchPID.p = *(float*) (arg + 8);
+    pitchPID.i = *(float*) (arg + 12);
+    pitchPID.d = *(float*) (arg + 16);
 
     rolPID.p = pitchPID.p;
     rolPID.i = pitchPID.i;
@@ -215,6 +454,7 @@ void setup() {
   groundStation.registerCommand('C', cmdRotorConfig);
   groundStation.registerCommand('G', cmdSendConfiguration);
   groundStation.registerCommand('S', cmdSetConfiguration);
+  groundStation.registerCommand('L', cmdSendConfigurationList);
   groundStation.registerCommand('M', cmdMotors);
   groundStation.registerCommand('P', cmdUpdatePid);
 //  groundStation.registerCommand('A', cmdUpdateAccelError);
@@ -275,13 +515,13 @@ void eulerAngles() {
 
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 
-#define GRAVITY 245
+#define GRAVITY 245.0f
 void computeOmegas() {
 
   Vector3f acc(-compass.a.x, -compass.a.y, -compass.a.z);
   acc.substract(&accelCorrection);
 
-  float weight = 1;
+  float weight = 1.0f;
   float kp = accelPID.p;
   float ki = accelPID.i;
 
@@ -315,20 +555,12 @@ void computeOmegas() {
   omegaI.data[ZAXIS] = 0;
 
   if (REPORTING & REPORT_OMEGA) {
-//    Serial.print(CMD_BEGIN);
-//    Serial.print(CMD_OMEGA);
-//    Serial.print(kp);
-//    Serial.print(',');
-//    Serial.print(ki, 4);
-//    Serial.print(',');
-//    Serial.print(weight);
-//    Serial.print(';');
-//    accelCorrection.print();
-//    Serial.print(';');
-//    omegaP.print();
-//    Serial.print(';');
-//    omegaI.print();
-//    Serial.print(CMD_END);
+    groundStation.beginMessage(CMD_OMEGA);
+    groundStation.writeFloatsField(1, omegaP.data, 3);
+    groundStation.writeFloatsField(2, omegaI.data, 3);
+    groundStation.writeFloatsField(3, err.data, 2);
+    groundStation.writeFloatField(4, weight);
+    groundStation.finishMessage();
   }
 }
 
@@ -406,34 +638,44 @@ void perform50HzActions() {
 
   // update motor
   if (motors.isArmed()) {
-//    motors.pitch = pitchPID.computePID(kinematicsAngle[PITCH] * anglesScale + gyroGain.data[PITCH] * gyroScale,
-//        targetAngles[PITCH], currentMicros);
-//    motors.rol = rolPID.computePID(kinematicsAngle[ROL] * anglesScale + gyroGain.data[ROL] * gyroScale,
-//        targetAngles[ROL], currentMicros);
-//    motors.yaw = yawPID.computePID(kinematicsAngle[YAW] * anglesScale + gyroGain.data[YAW] * gyroScale,
-//        targetAngles[YAW], currentMicros);
-//
-    // based on gyro, targeting gyro gain == 0;
-//    motors.pitch = gyroScale * pitchPID.computePID(gyroGain.data[PITCH], 0, currentMicros);
-//    motors.rol = gyroScale * rolPID.computePID(gyroGain.data[ROL], 0, currentMicros);
-//    motors.yaw = gyroScale * yawPID.computePID(gyroGain.data[YAW], 0, currentMicros);
 
-    // based on location
-//    motors.pitch -= (kinematicsAngle[PITCH] - targetAngles[PITCH]) * anglesScale;
-//    motors.rol -= (kinematicsAngle[ROL] - targetAngles[ROL]) * anglesScale;
-//    motors.yaw -= (kinematicsAngle[YAW] - targetAngles[YAW]) * anglesScale;
+    switch (mixin_type) {
+    case MIXIN_TYPE_ORIENTATION: {
 
-    // ------- location only PID
+      // ------- location only PID
+      motors.pitch = pitchPID.computePID(kinematicsAngle[PITCH], targetAngles[PITCH], currentMicros);
+      motors.rol = rolPID.computePID(kinematicsAngle[ROL], targetAngles[ROL], currentMicros);
+      motors.yaw = yawPID.computePID(kinematicsAngle[YAW], targetAngles[YAW], currentMicros);
 
-    motors.pitch =  pitchPID.computePID(kinematicsAngle[PITCH], targetAngles[PITCH], currentMicros);
-    motors.rol =  rolPID.computePID(kinematicsAngle[ROL], targetAngles[ROL], currentMicros);
-    motors.yaw =  yawPID.computePID(kinematicsAngle[YAW], targetAngles[YAW], currentMicros);
+      break;
+    }
+    case MIXIN_TYPE_ORIENTATION_GYRO: {
 
-    // square root
+      // mixin gyro and orientation
+      motors.pitch = pitchPID.computePID(kinematicsAngle[PITCH] * anglesScale + gyroGain.data[PITCH] * gyroScale,
+          targetAngles[PITCH], currentMicros);
+      motors.rol = rolPID.computePID(kinematicsAngle[ROL] * anglesScale + gyroGain.data[ROL] * gyroScale,
+          targetAngles[ROL], currentMicros);
+      motors.yaw = yawPID.computePID(kinematicsAngle[YAW] * anglesScale + gyroGain.data[YAW] * gyroScale,
+          targetAngles[YAW], currentMicros);
+      break;
+    }
+    case MIXIN_TYPE_GYRO: {
 
-
-    // -------
-
+      // Only gyro input
+      motors.pitch = pitchPID.computePID(gyroGain.data[PITCH] * gyroScale, targetAngles[PITCH], currentMicros);
+      motors.rol = rolPID.computePID(gyroGain.data[ROL] * gyroScale, targetAngles[ROL], currentMicros);
+      motors.yaw = yawPID.computePID(gyroGain.data[YAW] * gyroScale, targetAngles[YAW], currentMicros);
+      break;
+    }
+    default: {
+      // full manual control
+      motors.pitch = targetAngles[PITCH];
+      motors.rol = targetAngles[ROL];
+      motors.yaw = targetAngles[YAW];
+      break;
+    }
+    }
 
     if (REPORTING & REPORT_STABILIZATION) {
 
@@ -446,15 +688,14 @@ void perform50HzActions() {
       float motorsData[] = { motors.pitch, motors.rol, motors.yaw };
       groundStation.writeFloatsField(5, motorsData, 3);
       groundStation.writeFloatsField(6, targetAngles, 3);
-
       groundStation.writeFloatField(7, gyroScale);
-
       groundStation.finishMessage();
     }
   }
 
   // update motors with commands
   motors.updateMotors();
+
   if (REPORTING & REPORT_MOTORS) {
     motors.print();
   }
@@ -467,6 +708,7 @@ void loop() {
   currentMicros = micros();
 
   if (currentMillisTime > next50Hz) {
+    groundStation.processCmds();
 
     perform50HzActions();
 
@@ -477,8 +719,6 @@ void loop() {
       groundStation.writeVUInt32Field(3, groundStation.bytesSent());
       groundStation.finishMessage();
     }
-
-    groundStation.processCmds();
 
     next50Hz += DELAY_50HZ;
   }

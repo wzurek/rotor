@@ -10,7 +10,7 @@
 
 #include <Arduino.h>
 
-#define CMD_BUFF_MAX 50
+#define CMD_BUFF_MAX 100
 
 #define FIELD_VINT 0
 #define FIELD_FIXED_LEN 2
@@ -31,6 +31,7 @@
 #define CMD_STABILIZATION 'Q'
 #define CMD_OMEGA 'O'
 #define CMD_CONFIGURATION 'C'
+#define CMD_CONFIGURATION_LIST 'L'
 
 
 typedef void (*handlerPtr)(const uint8_t*, size_t size);
@@ -56,6 +57,8 @@ class GroundStationComm {
   uint32_t handlersCount;
   Handler handlers[MAX_HANDLERS];
 
+  uint32_t resetCharCount;
+
   void invokeCommand();
 
 
@@ -74,6 +77,7 @@ public:
    * Parse VUint from the buffer, returns size of the parsed VInt
    */
   size_t parseVUint32(const uint8_t* buff, size_t size, uint32_t* vint_result);
+  size_t parseVSint32(const uint8_t* buff, size_t size, int32_t* vint_result);
 
   // for constructing messages
   size_t appendVuint32(uint32_t val, uint8_t *buff);

@@ -11,6 +11,8 @@
 #define CMD_WAIT_FOR_CMD_END 1
 #define CMD_WAIT_FOR_CMD_SIZE 2
 
+#define RESET_CHAR 'A'
+
 GroundStationComm::GroundStationComm() {
   buff_index = 0;
   cmd_index = 0;
@@ -19,15 +21,16 @@ GroundStationComm::GroundStationComm() {
   cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
   sentBytes = 0;
   handlersCount = 0;
+  resetCharCount = 0;
 }
 
 void GroundStationComm::invokeCommand() {
 
-  char msg[3];
-  msg[0] = '-';
-  msg[1] = cmd;
-  msg[2] = 0;
-  textMessage(msg);
+//  char msg[3];
+//  msg[0] = '-';
+//  msg[1] = cmd;
+//  msg[2] = 0;
+//  textMessage(msg);
 
   for (int i = 0; i < handlersCount; i++) {
     if (handlers[i].cmd == cmd) {
@@ -46,18 +49,35 @@ void GroundStationComm::invokeCommand() {
 
 void GroundStationComm::processCmds() {
 
-  size_t available = Serial.available();
-  if (available > 0) {
+//  size_t available = Serial.available();
+//  if (available > 0) {
 
-    if (available > CMD_BUFF_MAX) {
-      available = CMD_BUFF_MAX;
-    }
+//    if (available > CMD_BUFF_MAX) {
+//      available = CMD_BUFF_MAX;
+//    }
 
-    size_t size = Serial.readBytes((char*)cmd_buff, available);
-    buff_index = 0;
+//    size_t size = Serial.readBytes((char*)cmd_buff, available);
+//    buff_index = 0;
 
-    while (buff_index < size) {
-      int c = cmd_buff[buff_index++];
+    while (Serial.available()) {
+      int c = Serial.read();
+
+      if (c == RESET_CHAR) {
+        resetCharCount++;
+        char buff[10];
+        sprintf(buff, "A:%d", resetCharCount);
+        textMessage(buff);
+      } else {
+        if (resetCharCount > 10) {
+          cmd_read_state = CMD_WAIT_FOR_CMD_BEGIN;
+          cmd = ' ';
+          cmd_index = 0;
+          cmdArg[0] = 0;
+
+          textMessage("Message reset.");
+        }
+        resetCharCount = 0;
+      }
 
       switch (cmd_read_state) {
 
@@ -95,11 +115,20 @@ void GroundStationComm::processCmds() {
         cmdArg[0] = 0;
       }
     }
-  }
+//  }
 }
 
 // global object
 GroundStationComm groundStation;
+
+size_t GroundStationComm::parseVSint32(const uint8_t* buff, size_t size, int32_t* vint) {
+  uint32_t resultVal;
+  size_t result;
+  result = parseVUint32(buff, size, &resultVal);
+  *vint = (resultVal >> 1) | ((resultVal & 1) << 31);
+
+  return result;
+}
 
 size_t GroundStationComm::parseVUint32(const uint8_t* buff, size_t size, uint32_t* vint) {
   if (buff[0] & 0x80) {
@@ -199,7 +228,7 @@ void GroundStationComm::writeVUInt32Field(uint32_t id, uint32_t val) {
 
 void GroundStationComm::writeVInt32Field(uint32_t id, int32_t val) {
   beginField(id, FIELD_VINT);
-  writeVUInt32(val);
+  writeVInt32(val);
 }
 
 void GroundStationComm::writeFixedField(uint32_t id, uint32_t size, uint8_t *buff) {
@@ -239,7 +268,11 @@ void GroundStationComm::writeVInt16(int16_t val) {
 void GroundStationComm::writeBytes(uint8_t* buff, size_t size) {
   // write to serial port
   // for some reason eclipse does not recognize this function.
-  Serial.write(buff, size);
+  //  Serial.write(buff, size);
+
+  for(size_t i = 0; i < size; i++) {
+    Serial.write(buff[i]);
+  }
 
   // for communication stats
   sentBytes += size;
